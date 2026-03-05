@@ -5,7 +5,7 @@ import Courses from './components/pages/Courses';
 import Detail from './components/pages/Detail';
 import Login from './components/pages/Login';
 import Register from './components/pages/Register';
-import CoursesEnrolled from './components/pages/account/CoursesEnrolled';
+import MyLearning from './components/pages/account/MyLearning';
 import MyCourses from './components/pages/account/MyCourses';
 import ChangePassword from './components/pages/account/ChangePassword';
 import WatchCourse from './components/pages/account/WatchCourse';
@@ -23,7 +23,7 @@ function App() {
           <Route path="/account/login" element={<Login />} />
           <Route path="/account/register" element={<Register />} />
           <Route path="/account/my-courses" element={<MyCourses />} />
-          <Route path="/account/courses-enrolled" element={<CoursesEnrolled />} />
+          <Route path="/account/courses-enrolled" element={<MyLearning />} />
           <Route path="/account/watch-course" element={<WatchCourse />} />
           <Route path="/account/change-password" element={<ChangePassword />} />
         </Routes>
