@@ -26,9 +26,11 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip \
-    nodejs \
-    npm
+    unzip
+
+# Install Node.js 18
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
 
 # Enable mod_rewrite
 RUN a2enmod rewrite
@@ -73,8 +75,8 @@ RUN echo "APP_NAME=${APP_NAME}" >> .env && \
     echo "DB_CONNECTION=${DB_CONNECTION}" >> .env && \
     echo "DB_HOST=${DB_HOST}" >> .env && \
     echo "DB_DATABASE=${DB_DATABASE}" >> .env && \
-    echo "DB_DATABASE=${DB_USERNAME}" >> .env && \
-    echo "DB_DATABASE=${DB_PASSWORD}" >> .env && \
+    echo "DB_USERNAME=${DB_USERNAME}" >> .env && \
+    echo "DB_PASSWORD=${DB_PASSWORD}" >> .env && \
     echo "DB_PORT=${DB_PORT}" >> .env
 
 # Set permissions for Laravel storage and cache

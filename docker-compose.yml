@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: SmartLearn
+        APP_ENV: local
+        APP_KEY: 'base64:jB7NbVTnIbVHd8b3wgGe8AzUsQzv1fs8PTXa12d5iis='
+        APP_DEBUG: 'true'
+        APP_URL: 'http://localhost:8000'
+        FRONTEND_URL: 'http://localhost:5173'
+        LOG_LEVEL: debug
+        DB_CONNECTION: mysql
+        DB_HOST: db
+        DB_PORT: '3306'
+        DB_DATABASE: smartlearn
+        DB_USERNAME: root
+        DB_PASSWORD: secret
+        VITE_BACKEND_ENDPOINT: 'http://localhost:8000'
+    ports:
+      - '8000:80'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: smartlearn
+    ports:
+      - '3306:3306'
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./database/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: secret
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  dbdata:

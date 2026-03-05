@@ -1,8 +1,9 @@
 {
-  "name": "attendance_tracker",
+  "name": "smartlearn",
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "dev": "cd client && npm run dev",
     "start:client": "cd client && npm run dev",
     "start:server": "cd server && php artisan serve",
     "build:client": "cd client && npm run build",
