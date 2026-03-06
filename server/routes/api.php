@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -43,3 +44,6 @@ Route::get('/courses/{id}', function ($id) {
     $course = \App\Models\Course::with(['category', 'level', 'language', 'user', 'chapters.lessons', 'outcomes', 'requirements', 'reviews.user'])->findOrFail($id);
     return response()->json($course);
 });
+
+// Account routes
+Route::post('/register', [AccountController::class, 'register']);
