@@ -9,12 +9,18 @@ import MyLearning from './components/pages/account/MyLearning';
 import MyCourses from './components/pages/account/MyCourses';
 import ChangePassword from './components/pages/account/ChangePassword';
 import WatchCourse from './components/pages/account/WatchCourse';
+import Dashboard from './components/pages/account/Dashboard';
+import { RequireAuth } from './components/common/RequireAuth';
+import { AuthProvider } from './components/context/Auth';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   const [count, setCount] = useState(0);
 
   return (
     <>
+      <AuthProvider>
+      <Toaster />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -26,8 +32,10 @@ function App() {
           <Route path="/account/courses-enrolled" element={<MyLearning />} />
           <Route path="/account/watch-course" element={<WatchCourse />} />
           <Route path="/account/change-password" element={<ChangePassword />} />
+          <Route path="/account/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         </Routes>
       </BrowserRouter>
+      </AuthProvider>
     </>
   );
 }
