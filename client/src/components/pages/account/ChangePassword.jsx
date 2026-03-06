@@ -5,6 +5,7 @@ const ChangePassword = () => {
   return (
     <Layout>
       <h1>Change Password</h1>
+      
     </Layout>
   );
 };
