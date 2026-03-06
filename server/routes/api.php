@@ -47,3 +47,4 @@ Route::get('/courses/{id}', function ($id) {
 
 // Account routes
 Route::post('/register', [AccountController::class, 'register']);
+Route::post('/authenticate', [AccountController::class, 'authenticate']);
