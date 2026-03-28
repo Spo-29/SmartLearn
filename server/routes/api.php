@@ -44,12 +44,14 @@ Route::get('/courses/featured', function () {
 Route::get('/courses/{id}', function ($id) {
     $course = \App\Models\Course::with(['category', 'level', 'language', 'user', 'chapters.lessons', 'outcomes', 'requirements', 'reviews.user'])->findOrFail($id);
     return response()->json($course);
-});
+})->whereNumber('id');
 
 // Account routes
 Route::post('/register', [AccountController::class, 'register']);
 Route::post('/authenticate', [AccountController::class, 'authenticate']);
 Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::get('/courses/meta', [CourseController::class, 'metadata']);
+    Route::get('/courses/{id}/edit', [CourseController::class, 'edit'])->whereNumber('id');
     Route::post('/courses',[CourseController::class, 'store']);
-    
+    Route::put('/courses/{id}', [CourseController::class, 'update'])->whereNumber('id');
 });
