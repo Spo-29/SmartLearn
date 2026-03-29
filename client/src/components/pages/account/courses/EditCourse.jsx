@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import UserSidebar from '../../../common/UserSidebar';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import ManageOutcome from './ManageOutcome';
 
 const EditCourse = () => {
   const navigate = useNavigate();
@@ -192,14 +193,18 @@ const EditCourse = () => {
             </div>
 
             <div className="col-lg-9">
-              <div className="row">
-                <form onSubmit={handleSubmit(onSubmit)}>
-                  <div className="card border-0 shadow-lg">
-                    <div className="card-body p-4">
-                      {loading ? (
-                        <p className="mb-0">Loading course details...</p>
-                      ) : (
-                        <>
+              {loading ? (
+                <div className="card border-0 shadow-lg">
+                  <div className="card-body p-4">
+                    <p className="mb-0">Loading course details...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="row g-3 align-items-start">
+                  <div className="col-lg-8">
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                      <div className="card border-0 shadow-lg">
+                        <div className="card-body p-4">
                           <h3 className="h5">Course Details</h3>
                           <hr />
 
@@ -346,12 +351,16 @@ const EditCourse = () => {
                           <button className="btn btn-primary" disabled={isSubmitting}>
                             {isSubmitting ? 'Updating...' : 'Update'}
                           </button>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                      </div>
+                    </form>
                   </div>
-                </form>
-              </div>
+
+                  <div className="col-lg-4">
+                    <ManageOutcome courseId={id} />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
