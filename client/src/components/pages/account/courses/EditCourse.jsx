@@ -5,6 +5,7 @@ import UserSidebar from '../../../common/UserSidebar';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import ManageOutcome from './ManageOutcome';
+import ManageRequirement from './ManageRequirement';
 
 const EditCourse = () => {
   const navigate = useNavigate();
@@ -358,6 +359,9 @@ const EditCourse = () => {
 
                   <div className="col-lg-4">
                     <ManageOutcome courseId={id} />
+                    <div className="mt-3">
+                      <ManageRequirement courseId={id} />
+                    </div>
                   </div>
                 </div>
               )}

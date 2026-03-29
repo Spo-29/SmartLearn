@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\OutcomeController;
+use App\Http\Controllers\RequirementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -59,4 +60,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/courses/{courseId}/outcomes', [OutcomeController::class, 'store'])->whereNumber('courseId');
     Route::put('/outcomes/{id}', [OutcomeController::class, 'update'])->whereNumber('id');
     Route::delete('/outcomes/{id}', [OutcomeController::class, 'destroy'])->whereNumber('id');
+    Route::get('/courses/{courseId}/requirements', [RequirementController::class, 'index'])->whereNumber('courseId');
+    Route::post('/courses/{courseId}/requirements', [RequirementController::class, 'store'])->whereNumber('courseId');
+    Route::put('/requirements/{id}', [RequirementController::class, 'update'])->whereNumber('id');
+    Route::delete('/requirements/{id}', [RequirementController::class, 'destroy'])->whereNumber('id');
 });
