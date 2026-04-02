@@ -5,10 +5,12 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\File;
 use App\Models\Course;
 use App\Models\Category;
 use App\Models\Level;
 use App\Models\Language;
+use Intervention\Image\Facades\Image;
 
 class CourseController extends Controller
 {
@@ -124,5 +126,84 @@ class CourseController extends Controller
             'data' => $course,
             'message' => 'Course updated successfully.',
         ], 200);
+    }
+
+    public function saveCourseImage(Request $request, $id)
+    {
+        $course = Course::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$course) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Course not found.',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|mimes:jpeg,jpg,png|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 400,
+                'errors' => $validator->errors(),
+            ], 400);
+        }
+
+        $image = $request->file('image');
+        $extension = strtolower($image->getClientOriginalExtension());
+        $fileName = time() . '_' . uniqid() . '.' . $extension;
+
+        $mainDirectory = public_path('upload/course');
+        $smallDirectory = public_path('upload/course/small');
+
+        if (!File::exists($mainDirectory)) {
+            File::makeDirectory($mainDirectory, 0755, true);
+        }
+
+        if (!File::exists($smallDirectory)) {
+            File::makeDirectory($smallDirectory, 0755, true);
+        }
+
+        $this->deleteCourseImages($course->image);
+
+        $image->move($mainDirectory, $fileName);
+
+        $smallImagePath = $smallDirectory . DIRECTORY_SEPARATOR . $fileName;
+        Image::make($mainDirectory . DIRECTORY_SEPARATOR . $fileName)
+            ->fit(480, 270, function ($constraint) {
+                $constraint->upsize();
+            })
+            ->save($smallImagePath, 85);
+
+        $course->image = $fileName;
+        $course->save();
+        $course->refresh();
+
+        return response()->json([
+            'status' => 200,
+            'data' => $course,
+            'message' => 'Course image uploaded successfully.',
+        ], 200);
+    }
+
+    private function deleteCourseImages($fileName)
+    {
+        if (!$fileName) {
+            return;
+        }
+
+        $mainPath = public_path('upload/course/' . $fileName);
+        $smallPath = public_path('upload/course/small/' . $fileName);
+
+        if (File::exists($mainPath)) {
+            File::delete($mainPath);
+        }
+
+        if (File::exists($smallPath)) {
+            File::delete($smallPath);
+        }
     }
 }

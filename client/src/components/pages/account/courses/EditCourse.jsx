@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import ManageOutcome from './ManageOutcome';
 import ManageRequirement from './ManageRequirement';
+import EditCover from './EditCover';
+import ManageChapter from './ManageChapter';
 
 const EditCourse = () => {
   const navigate = useNavigate();
@@ -37,6 +39,7 @@ const EditCourse = () => {
     languages: [],
   });
   const [loading, setLoading] = useState(true);
+  const [courseData, setCourseData] = useState(null);
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
@@ -97,6 +100,7 @@ const EditCourse = () => {
         });
 
         const course = courseResult.data;
+        setCourseData(course);
 
         reset({
           title: course?.title || '',
@@ -361,6 +365,12 @@ const EditCourse = () => {
                     <ManageOutcome courseId={id} />
                     <div className="mt-3">
                       <ManageRequirement courseId={id} />
+                    </div>
+                    <div className="mt-3">
+                      <EditCover courseId={id} course={courseData} onUploaded={setCourseData} />
+                    </div>
+                    <div className="mt-3">
+                      <ManageChapter courseId={id} />
                     </div>
                   </div>
                 </div>

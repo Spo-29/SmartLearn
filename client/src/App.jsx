@@ -15,6 +15,8 @@ import { AuthProvider } from './components/context/Auth';
 import { Toaster } from 'react-hot-toast';
 import CreateCourse from './components/pages/account/courses/CreateCourse';
 import EditCourse from './components/pages/account/courses/EditCourse';
+import EditLesson from './components/pages/account/courses/EditLesson';
+import LessonBasicInfo from './components/pages/account/courses/LessonBasicInfo';
 
 function App() {
   
@@ -55,6 +57,22 @@ function App() {
               element={
                 <RequireAuth>
                   <EditCourse />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/account/courses/:courseId/lessons/:lessonId/edit"
+              element={
+                <RequireAuth>
+                  <EditLesson />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/account/courses/:courseId/lessons/:lessonId"
+              element={
+                <RequireAuth>
+                  <LessonBasicInfo />
                 </RequireAuth>
               }
             />
