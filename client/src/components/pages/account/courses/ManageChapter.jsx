@@ -5,6 +5,8 @@ import { FaRegEdit, FaRegTrashAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import UpdateChapter from './UpdateChapter';
 import CreatedLesson from './CreatedLesson';
+import LessonSort from './LessonSort';
+import ChapterSort from './ChapterSort';
 
 const ManageChapter = ({ courseId }) => {
   const navigate = useNavigate();
@@ -19,6 +21,10 @@ const ManageChapter = ({ courseId }) => {
   const [showCreateLesson, setShowCreateLesson] = useState(false);
   const [defaultLessonChapterId, setDefaultLessonChapterId] = useState('');
   const [deletingLessonId, setDeletingLessonId] = useState(null);
+  const [showChapterSort, setShowChapterSort] = useState(false);
+  const [sortingChapterId, setSortingChapterId] = useState(null);
+  const [sortingChapterOrder, setSortingChapterOrder] = useState(false);
+  const [sortingLessonOrder, setSortingLessonOrder] = useState(false);
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
@@ -255,7 +261,18 @@ const ManageChapter = ({ courseId }) => {
       const result = await response.json();
 
       if (result.status === 200) {
-        setChapters((prev) => prev.map((item) => (item.id === result.data.id ? result.data : item)));
+        setChapters((prev) =>
+          prev.map((item) => {
+            if (item.id !== result.data.id) {
+              return item;
+            }
+
+            return {
+              ...result.data,
+              lessons: item.lessons || [],
+            };
+          }),
+        );
         setEditingChapter(null);
         toast.success(result.message || 'Chapter updated successfully.');
       } else if (result.errors?.title?.[0]) {
@@ -270,22 +287,125 @@ const ManageChapter = ({ courseId }) => {
     }
   };
 
+  const handleSortChapters = async (orderedChapters) => {
+    if (!token) {
+      return false;
+    }
+
+    setSortingChapterOrder(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${courseId}/chapters/sort`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: orderedChapters.map((item) => item.id) }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        if (Array.isArray(result.data)) {
+          setChapters(result.data.map((chapter) => ({ ...chapter, lessons: chapter.lessons || [] })));
+        }
+        toast.success(result.message || 'Order updated successfully.');
+        setShowChapterSort(false);
+        return true;
+      }
+
+      toast.error(result.message || 'Failed to update order.');
+      return false;
+    } catch (error) {
+      toast.error('Failed to update order.');
+      return false;
+    } finally {
+      setSortingChapterOrder(false);
+    }
+  };
+
+  const handleSortLessons = async (chapterId, orderedLessons) => {
+    if (!token) {
+      return false;
+    }
+
+    setSortingLessonOrder(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${courseId}/chapters/${chapterId}/lessons/sort`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: orderedLessons.map((item) => item.id) }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        if (Array.isArray(result.data)) {
+          setChapters((prev) =>
+            prev.map((chapter) =>
+              chapter.id === chapterId
+                ? {
+                    ...chapter,
+                    lessons: result.data,
+                  }
+                : chapter,
+            ),
+          );
+        }
+        toast.success(result.message || 'Order updated successfully.');
+        setSortingChapterId(null);
+        return true;
+      }
+
+      toast.error(result.message || 'Failed to update order.');
+      return false;
+    } catch (error) {
+      toast.error('Failed to update order.');
+      return false;
+    } finally {
+      setSortingLessonOrder(false);
+    }
+  };
+
   return (
     <div className="card border-0 shadow-lg">
       <div className="card-body p-4">
         <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
           <h3 className="h5 mb-0">Chapters</h3>
-          <button
-            type="button"
-            className="btn btn-link text-dark fw-semibold p-0"
-            onClick={() => {
-              setDefaultLessonChapterId(activeKey || (chapters[0] ? String(chapters[0].id) : ''));
-              setShowCreateLesson(true);
-            }}
-            disabled={chapters.length === 0}
-          >
-            + Add Lesson
-          </button>
+          <div className="d-flex align-items-center gap-3">
+            <button
+              type="button"
+              className="btn btn-link text-dark fw-semibold p-0"
+              onClick={() => setShowChapterSort(true)}
+              disabled={chapters.length < 2}
+            >
+              Reorder Chapters
+            </button>
+            <button
+              type="button"
+              className="btn btn-link text-dark fw-semibold p-0"
+              onClick={() => {
+                setDefaultLessonChapterId(activeKey || (chapters[0] ? String(chapters[0].id) : ''));
+                setShowCreateLesson(true);
+              }}
+              disabled={chapters.length === 0}
+            >
+              + Add Lesson
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleStore}>
@@ -320,16 +440,26 @@ const ManageChapter = ({ courseId }) => {
                   <Accordion.Body>
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <h6 className="mb-0">Lessons</h6>
-                      <button
-                        type="button"
-                        className="btn btn-link p-0"
-                        onClick={() => {
-                          setDefaultLessonChapterId(String(chapter.id));
-                          setShowCreateLesson(true);
-                        }}
-                      >
-                        Add Lesson
-                      </button>
+                      <div className="d-flex align-items-center gap-3">
+                        <button
+                          type="button"
+                          className="btn btn-link p-0"
+                          onClick={() => setSortingChapterId(chapter.id)}
+                          disabled={(chapter.lessons || []).length < 2}
+                        >
+                          Reorder Lessons
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-link p-0"
+                          onClick={() => {
+                            setDefaultLessonChapterId(String(chapter.id));
+                            setShowCreateLesson(true);
+                          }}
+                        >
+                          Add Lesson
+                        </button>
+                      </div>
                     </div>
 
                     {chapter.lessons?.length ? (
@@ -414,6 +544,22 @@ const ManageChapter = ({ courseId }) => {
         defaultChapterId={defaultLessonChapterId}
         onClose={() => setShowCreateLesson(false)}
         onSave={handleCreateLesson}
+      />
+
+      <ChapterSort
+        show={showChapterSort}
+        chapters={chapters}
+        loading={sortingChapterOrder}
+        onClose={() => setShowChapterSort(false)}
+        onSave={handleSortChapters}
+      />
+
+      <LessonSort
+        show={Boolean(sortingChapterId)}
+        chapter={chapters.find((chapter) => chapter.id === sortingChapterId) || null}
+        loading={sortingLessonOrder}
+        onClose={() => setSortingChapterId(null)}
+        onSave={handleSortLessons}
       />
     </div>
   );

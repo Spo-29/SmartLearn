@@ -62,6 +62,19 @@ class CourseController extends Controller
         ], 200);
     }
 
+    public function myCourses(Request $request)
+    {
+        $courses = Course::with(['category', 'level', 'language'])
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json([
+            'status' => 200,
+            'data' => $courses,
+        ], 200);
+    }
+
     public function edit(Request $request, $id)
     {
         $course = Course::where('id', $id)
@@ -186,6 +199,28 @@ class CourseController extends Controller
             'status' => 200,
             'data' => $course,
             'message' => 'Course image uploaded successfully.',
+        ], 200);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $course = Course::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$course) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Course not found.',
+            ], 404);
+        }
+
+        $this->deleteCourseImages($course->image);
+        $course->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Course deleted successfully.',
         ], 200);
     }
 

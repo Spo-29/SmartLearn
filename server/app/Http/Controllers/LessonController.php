@@ -6,6 +6,7 @@ use App\Models\Chapter;
 use App\Models\Course;
 use App\Models\Lesson;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class LessonController extends Controller
@@ -200,6 +201,86 @@ class LessonController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Lesson deleted successfully.',
+        ], 200);
+    }
+
+    public function sortLessons(Request $request, $courseId, $chapterId)
+    {
+        $course = Course::where('id', $courseId)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$course) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Course not found.',
+            ], 404);
+        }
+
+        $chapter = Chapter::where('id', $chapterId)
+            ->where('course_id', $course->id)
+            ->first();
+
+        if (!$chapter) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Chapter not found.',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|integer|distinct|exists:lessons,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 400,
+                'errors' => $validator->errors(),
+            ], 400);
+        }
+
+        $ids = array_map('intval', $request->input('ids', []));
+        $count = Lesson::where('chapter_id', $chapter->id)
+            ->whereIn('id', $ids)
+            ->count();
+
+        if ($count !== count($ids)) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Invalid lesson order payload.',
+            ], 400);
+        }
+
+        $allIds = Lesson::where('chapter_id', $chapter->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->toArray();
+
+        $missingIds = array_values(array_diff($allIds, $ids));
+        $finalIds = array_merge($ids, $missingIds);
+
+        DB::transaction(function () use ($finalIds, $chapter) {
+            foreach ($finalIds as $index => $id) {
+                Lesson::where('chapter_id', $chapter->id)
+                    ->where('id', $id)
+                    ->update(['sort_order' => $index + 1]);
+            }
+        });
+
+        $lessons = Lesson::where('chapter_id', $chapter->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Order updated successfully.',
+            'data' => $lessons,
         ], 200);
     }
 }

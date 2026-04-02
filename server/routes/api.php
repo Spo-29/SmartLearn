@@ -54,10 +54,14 @@ Route::get('/courses/{id}', function ($id) {
 Route::post('/register', [AccountController::class, 'register']);
 Route::post('/authenticate', [AccountController::class, 'authenticate']);
 Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::get('/account/profile', [AccountController::class, 'profile']);
+    Route::put('/account/profile', [AccountController::class, 'updateProfile']);
+    Route::get('/my-courses', [CourseController::class, 'myCourses']);
     Route::get('/courses/meta', [CourseController::class, 'metadata']);
     Route::get('/courses/{id}/edit', [CourseController::class, 'edit'])->whereNumber('id');
     Route::post('/courses',[CourseController::class, 'store']);
     Route::put('/courses/{id}', [CourseController::class, 'update'])->whereNumber('id');
+    Route::delete('/courses/{id}', [CourseController::class, 'destroy'])->whereNumber('id');
     Route::post('/courses/{id}/image', [CourseController::class, 'saveCourseImage'])->whereNumber('id');
     Route::get('/courses/{courseId}/outcomes', [OutcomeController::class, 'index'])->whereNumber('courseId');
     Route::post('/courses/{courseId}/outcomes', [OutcomeController::class, 'store'])->whereNumber('courseId');
@@ -71,7 +75,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/requirements/{id}', [RequirementController::class, 'destroy'])->whereNumber('id');
     Route::get('/courses/{courseId}/chapters', [ChapterController::class, 'index'])->whereNumber('courseId');
     Route::post('/courses/{courseId}/chapters', [ChapterController::class, 'store'])->whereNumber('courseId');
+    Route::post('/courses/{courseId}/chapters/sort', [ChapterController::class, 'sortChapters'])->whereNumber('courseId');
     Route::post('/courses/{courseId}/lessons', [LessonController::class, 'store'])->whereNumber('courseId');
+    Route::post('/courses/{courseId}/chapters/{chapterId}/lessons/sort', [LessonController::class, 'sortLessons'])->whereNumber('courseId')->whereNumber('chapterId');
     Route::put('/chapters/{id}', [ChapterController::class, 'update'])->whereNumber('id');
     Route::delete('/chapters/{id}', [ChapterController::class, 'destroy'])->whereNumber('id');
     Route::get('/lessons/{id}', [LessonController::class, 'show'])->whereNumber('id');

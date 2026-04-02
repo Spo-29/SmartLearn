@@ -33,9 +33,9 @@ const Login = () => {
             name: result.name,
           };
           localStorage.setItem('userInfoLms', JSON.stringify(userInfo));
-          login(JSON.stringify(userInfo));
+          login(userInfo);
           toast.success('Login successful!');
-          navigate('/account/dashboard');
+          navigate('/home');
         } else if (result.errors) {
           Object.keys(result.errors).forEach((field) => {
             setError(field, {
