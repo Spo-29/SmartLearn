@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Chapter;
 use App\Models\Course;
-use App\Models\Outcome;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class OutcomeController extends Controller
+class ChapterController extends Controller
 {
     public function index(Request $request, $courseId)
     {
@@ -23,14 +23,17 @@ class OutcomeController extends Controller
             ], 404);
         }
 
-        $outcomes = Outcome::where('course_id', $course->id)
+        $chapters = Chapter::with(['lessons' => function ($query) {
+                $query->orderBy('sort_order')->orderBy('id');
+            }])
+            ->where('course_id', $course->id)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
 
         return response()->json([
             'status' => 200,
-            'data' => $outcomes,
+            'data' => $chapters,
         ], 200);
     }
 
@@ -48,7 +51,8 @@ class OutcomeController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'text' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
+            'status' => 'nullable|in:0,1',
         ]);
 
         if ($validator->fails()) {
@@ -58,45 +62,47 @@ class OutcomeController extends Controller
             ], 400);
         }
 
-        $nextSortOrder = (int) Outcome::where('course_id', $course->id)->max('sort_order') + 1;
+        $nextSortOrder = (int) Chapter::where('course_id', $course->id)->max('sort_order') + 1;
 
-        $outcome = Outcome::create([
+        $chapter = Chapter::create([
+            'title' => $request->input('title'),
             'course_id' => $course->id,
-            'text' => $request->input('text'),
             'sort_order' => $nextSortOrder,
+            'status' => $request->input('status', 1),
         ]);
 
         return response()->json([
             'status' => 200,
-            'data' => $outcome,
-            'message' => 'Outcome saved successfully.',
+            'data' => $chapter,
+            'message' => 'Chapter saved successfully.',
         ], 200);
     }
 
     public function update(Request $request, $id)
     {
-        $outcome = Outcome::find($id);
+        $chapter = Chapter::find($id);
 
-        if (!$outcome) {
+        if (!$chapter) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Outcome not found.',
+                'message' => 'Chapter not found.',
             ], 404);
         }
 
-        $course = Course::where('id', $outcome->course_id)
+        $course = Course::where('id', $chapter->course_id)
             ->where('user_id', $request->user()->id)
             ->first();
 
         if (!$course) {
             return response()->json([
                 'status' => 403,
-                'message' => 'You are not allowed to update this outcome.',
+                'message' => 'You are not allowed to update this chapter.',
             ], 403);
         }
 
         $validator = Validator::make($request->all(), [
-            'text' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
+            'status' => 'nullable|in:0,1',
         ]);
 
         if ($validator->fails()) {
@@ -106,47 +112,48 @@ class OutcomeController extends Controller
             ], 400);
         }
 
-        $outcome->text = $request->input('text');
-        $outcome->save();
+        $chapter->title = $request->input('title');
+        $chapter->status = $request->input('status', $chapter->status);
+        $chapter->save();
 
         return response()->json([
             'status' => 200,
-            'data' => $outcome,
-            'message' => 'Outcome updated successfully.',
+            'data' => $chapter,
+            'message' => 'Chapter updated successfully.',
         ], 200);
     }
 
     public function destroy(Request $request, $id)
     {
-        $outcome = Outcome::find($id);
+        $chapter = Chapter::find($id);
 
-        if (!$outcome) {
+        if (!$chapter) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Outcome not found.',
+                'message' => 'Chapter not found.',
             ], 404);
         }
 
-        $course = Course::where('id', $outcome->course_id)
+        $course = Course::where('id', $chapter->course_id)
             ->where('user_id', $request->user()->id)
             ->first();
 
         if (!$course) {
             return response()->json([
                 'status' => 403,
-                'message' => 'You are not allowed to delete this outcome.',
+                'message' => 'You are not allowed to delete this chapter.',
             ], 403);
         }
 
-        $outcome->delete();
+        $chapter->delete();
 
         return response()->json([
             'status' => 200,
-            'message' => 'Outcome deleted successfully.',
+            'message' => 'Chapter deleted successfully.',
         ], 200);
     }
 
-    public function sortOutcomes(Request $request, $courseId)
+    public function sortChapters(Request $request, $courseId)
     {
         $course = Course::where('id', $courseId)
             ->where('user_id', $request->user()->id)
@@ -161,7 +168,7 @@ class OutcomeController extends Controller
 
         $validator = Validator::make($request->all(), [
             'ids' => 'required|array|min:1',
-            'ids.*' => 'required|integer|distinct|exists:outcomes,id',
+            'ids.*' => 'required|integer|distinct|exists:chapters,id',
         ]);
 
         if ($validator->fails()) {
@@ -172,18 +179,18 @@ class OutcomeController extends Controller
         }
 
         $ids = array_map('intval', $request->input('ids', []));
-        $count = Outcome::where('course_id', $course->id)
+        $count = Chapter::where('course_id', $course->id)
             ->whereIn('id', $ids)
             ->count();
 
         if ($count !== count($ids)) {
             return response()->json([
                 'status' => 400,
-                'message' => 'Invalid outcome order payload.',
+                'message' => 'Invalid chapter order payload.',
             ], 400);
         }
 
-        $allIds = Outcome::where('course_id', $course->id)
+        $allIds = Chapter::where('course_id', $course->id)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->pluck('id')
@@ -197,13 +204,16 @@ class OutcomeController extends Controller
 
         DB::transaction(function () use ($finalIds, $course) {
             foreach ($finalIds as $index => $id) {
-                Outcome::where('course_id', $course->id)
+                Chapter::where('course_id', $course->id)
                     ->where('id', $id)
                     ->update(['sort_order' => $index + 1]);
             }
         });
 
-        $outcomes = Outcome::where('course_id', $course->id)
+        $chapters = Chapter::with(['lessons' => function ($query) {
+                $query->orderBy('sort_order')->orderBy('id');
+            }])
+            ->where('course_id', $course->id)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
@@ -211,7 +221,7 @@ class OutcomeController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Order updated successfully.',
-            'data' => $outcomes,
+            'data' => $chapters,
         ], 200);
     }
 }

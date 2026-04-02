@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaRegEdit, FaRegTrashAlt } from 'react-icons/fa';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import UpdateRequirement from './UpdateRequirement';
 
 const ManageRequirement = ({ courseId }) => {
@@ -11,6 +12,7 @@ const ManageRequirement = ({ courseId }) => {
   const [deletingId, setDeletingId] = useState(null);
   const [editingRequirement, setEditingRequirement] = useState(null);
   const [updating, setUpdating] = useState(false);
+  const [sorting, setSorting] = useState(false);
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
@@ -177,6 +179,70 @@ const ManageRequirement = ({ courseId }) => {
     }
   };
 
+  const saveOrder = async (orderedRequirements) => {
+    if (!token) {
+      return false;
+    }
+
+    setSorting(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${courseId}/requirements/sort`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: orderedRequirements.map((item) => item.id) }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        if (Array.isArray(result.data)) {
+          setRequirements(result.data);
+        }
+        toast.success(result.message || 'Order updated successfully.');
+        return true;
+      }
+
+      toast.error(result.message || 'Failed to update order.');
+      return false;
+    } catch (error) {
+      toast.error('Failed to update order.');
+      return false;
+    } finally {
+      setSorting(false);
+    }
+  };
+
+  const handleDragEnd = async (result) => {
+    if (!result.destination) {
+      return;
+    }
+
+    if (result.destination.index === result.source.index) {
+      return;
+    }
+
+    const previousRequirements = [...requirements];
+    const reordered = [...requirements];
+    const [movedItem] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, movedItem);
+
+    setRequirements(reordered);
+
+    const isSaved = await saveOrder(reordered);
+
+    if (!isSaved) {
+      setRequirements(previousRequirements);
+    }
+  };
+
   return (
     <div className="card border-0 shadow-lg">
       <div className="card-body p-4">
@@ -203,36 +269,55 @@ const ManageRequirement = ({ courseId }) => {
           ) : requirements.length === 0 ? (
             <p className="mb-0 text-muted">No requirements added yet.</p>
           ) : (
-            requirements.map((requirement) => (
-              <div key={requirement.id} className="card mb-2 border-0 bg-light">
-                <div className="card-body py-2 px-3 d-flex align-items-center justify-content-between gap-3">
-                  <div className="d-flex align-items-start gap-2 flex-grow-1">
-                    <span className="text-muted">::</span>
-                    <span className="small mb-0">{requirement.text}</span>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="requirements-list">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {requirements.map((requirement, index) => (
+                      <Draggable key={requirement.id} draggableId={`requirement-${requirement.id}`} index={index}>
+                        {(dragProvided) => (
+                          <div
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            {...dragProvided.dragHandleProps}
+                            className="card mb-2 border-0 bg-light"
+                          >
+                            <div className="card-body py-2 px-3 d-flex align-items-center justify-content-between gap-3">
+                              <div className="d-flex align-items-start gap-2 flex-grow-1">
+                                <span className="text-muted">::</span>
+                                <span className="small mb-0">{requirement.text}</span>
+                              </div>
+                              <div className="d-flex align-items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="btn btn-link p-0 text-primary"
+                                  onClick={() => setEditingRequirement(requirement)}
+                                  title="Update"
+                                >
+                                  <FaRegEdit />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-link p-0 text-danger"
+                                  onClick={() => handleDelete(requirement.id)}
+                                  disabled={deletingId === requirement.id}
+                                  title="Delete"
+                                >
+                                  <FaRegTrashAlt />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
                   </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-link p-0 text-primary"
-                      onClick={() => setEditingRequirement(requirement)}
-                      title="Update"
-                    >
-                      <FaRegEdit />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-link p-0 text-danger"
-                      onClick={() => handleDelete(requirement.id)}
-                      disabled={deletingId === requirement.id}
-                      title="Delete"
-                    >
-                      <FaRegTrashAlt />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+                )}
+              </Droppable>
+            </DragDropContext>
           )}
+          {sorting && <p className="small text-muted mb-0 mt-2">Updating order...</p>}
         </div>
       </div>
 

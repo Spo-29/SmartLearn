@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Requirement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class RequirementController extends Controller
@@ -142,6 +143,75 @@ class RequirementController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Requirement deleted successfully.',
+        ], 200);
+    }
+
+    public function sortRequirements(Request $request, $courseId)
+    {
+        $course = Course::where('id', $courseId)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$course) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Course not found.',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|integer|distinct|exists:requirements,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 400,
+                'errors' => $validator->errors(),
+            ], 400);
+        }
+
+        $ids = array_map('intval', $request->input('ids', []));
+        $count = Requirement::where('course_id', $course->id)
+            ->whereIn('id', $ids)
+            ->count();
+
+        if ($count !== count($ids)) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Invalid requirement order payload.',
+            ], 400);
+        }
+
+        $allIds = Requirement::where('course_id', $course->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->toArray();
+
+        $missingIds = array_values(array_diff($allIds, $ids));
+        $finalIds = array_merge($ids, $missingIds);
+
+        DB::transaction(function () use ($finalIds, $course) {
+            foreach ($finalIds as $index => $id) {
+                Requirement::where('course_id', $course->id)
+                    ->where('id', $id)
+                    ->update(['sort_order' => $index + 1]);
+            }
+        });
+
+        $requirements = Requirement::where('course_id', $course->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Order updated successfully.',
+            'data' => $requirements,
         ], 200);
     }
 }

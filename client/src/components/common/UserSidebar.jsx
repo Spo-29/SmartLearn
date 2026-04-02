@@ -24,8 +24,14 @@ const UserSidebar = () => {
           </li>
 
           <li className="d-flex align-items-center">
+            <Link to="/account/profile">
+              <FaUserLock size={16} className="me-2" /> My Account
+            </Link>
+          </li>
+
+          <li className="d-flex align-items-center">
             <Link to="/account/my-learning">
-              <BsMortarboardFill size={16} className="me-2" /> My Learning
+              <BsMortarboardFill size={16} className="me-2" /> My Enrollments
             </Link>
           </li>
           <li className="d-flex align-items-center">
@@ -34,7 +40,7 @@ const UserSidebar = () => {
             </Link>
           </li>
           <li className="d-flex align-items-center ">
-            <Link href="#">
+            <Link to="/account/change-password">
               <FaUserLock size={16} className="me-2" /> Change Password
             </Link>
           </li>

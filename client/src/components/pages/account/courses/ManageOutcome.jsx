@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FaRegEdit, FaRegTrashAlt } from 'react-icons/fa';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import UpdateOutcome from './UpdateOutcome';
 
 const ManageOutcome = ({ courseId }) => {
@@ -11,6 +12,7 @@ const ManageOutcome = ({ courseId }) => {
   const [deletingId, setDeletingId] = useState(null);
   const [editingOutcome, setEditingOutcome] = useState(null);
   const [updating, setUpdating] = useState(false);
+  const [sorting, setSorting] = useState(false);
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
@@ -174,6 +176,70 @@ const ManageOutcome = ({ courseId }) => {
     }
   };
 
+  const saveOrder = async (orderedOutcomes) => {
+    if (!token) {
+      return false;
+    }
+
+    setSorting(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${courseId}/outcomes/sort`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: orderedOutcomes.map((item) => item.id) }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        if (Array.isArray(result.data)) {
+          setOutcomes(result.data);
+        }
+        toast.success(result.message || 'Order updated successfully.');
+        return true;
+      }
+
+      toast.error(result.message || 'Failed to update order.');
+      return false;
+    } catch (error) {
+      toast.error('Failed to update order.');
+      return false;
+    } finally {
+      setSorting(false);
+    }
+  };
+
+  const handleDragEnd = async (result) => {
+    if (!result.destination) {
+      return;
+    }
+
+    if (result.destination.index === result.source.index) {
+      return;
+    }
+
+    const previousOutcomes = [...outcomes];
+    const reordered = [...outcomes];
+    const [movedItem] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, movedItem);
+
+    setOutcomes(reordered);
+
+    const isSaved = await saveOrder(reordered);
+
+    if (!isSaved) {
+      setOutcomes(previousOutcomes);
+    }
+  };
+
   return (
     <div className="card border-0 shadow-lg">
       <div className="card-body p-4">
@@ -200,36 +266,55 @@ const ManageOutcome = ({ courseId }) => {
           ) : outcomes.length === 0 ? (
             <p className="mb-0 text-muted">No outcomes added yet.</p>
           ) : (
-            outcomes.map((outcome) => (
-              <div key={outcome.id} className="card mb-2 border-0 bg-light">
-                <div className="card-body py-2 px-3 d-flex align-items-center justify-content-between gap-3">
-                  <div className="d-flex align-items-start gap-2 flex-grow-1">
-                    <span className="text-muted">::</span>
-                    <span className="small mb-0">{outcome.text}</span>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="outcomes-list">
+                {(provided) => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {outcomes.map((outcome, index) => (
+                      <Draggable key={outcome.id} draggableId={`outcome-${outcome.id}`} index={index}>
+                        {(dragProvided) => (
+                          <div
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            {...dragProvided.dragHandleProps}
+                            className="card mb-2 border-0 bg-light"
+                          >
+                            <div className="card-body py-2 px-3 d-flex align-items-center justify-content-between gap-3">
+                              <div className="d-flex align-items-start gap-2 flex-grow-1">
+                                <span className="text-muted">::</span>
+                                <span className="small mb-0">{outcome.text}</span>
+                              </div>
+                              <div className="d-flex align-items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="btn btn-link p-0 text-primary"
+                                  onClick={() => setEditingOutcome(outcome)}
+                                  title="Update"
+                                >
+                                  <FaRegEdit />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-link p-0 text-danger"
+                                  onClick={() => handleDelete(outcome.id)}
+                                  disabled={deletingId === outcome.id}
+                                  title="Delete"
+                                >
+                                  <FaRegTrashAlt />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
                   </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-link p-0 text-primary"
-                      onClick={() => setEditingOutcome(outcome)}
-                      title="Update"
-                    >
-                      <FaRegEdit />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-link p-0 text-danger"
-                      onClick={() => handleDelete(outcome.id)}
-                      disabled={deletingId === outcome.id}
-                      title="Delete"
-                    >
-                      <FaRegTrashAlt />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+                )}
+              </Droppable>
+            </DragDropContext>
           )}
+          {sorting && <p className="small text-muted mb-0 mt-2">Updating order...</p>}
         </div>
       </div>
 
