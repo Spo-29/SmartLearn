@@ -57,6 +57,22 @@ class CourseController extends Controller
         ], 200);
     }
 
+
+    public function show($id) {
+    $course = Course::with('chapters')->find($id);
+
+    if ($course == null) {
+        return response()->json([
+            'status' => 404,
+            'message' => 'Course not found',
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => 200,
+        'data' => $course,
+    ], 200);
+}
     public function metadata()
     {
         return response()->json([
