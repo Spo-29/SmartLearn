@@ -105,5 +105,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/lessons/{id}', [LessonController::class, 'show'])->whereNumber('id');
     Route::put('/lessons/{id}', [LessonController::class, 'update'])->whereNumber('id');
     Route::delete('/lessons/{id}', [LessonController::class, 'destroy'])->whereNumber('id');
+    // Chapter routes
+Route::get('/chapters', [ChapterController::class, 'index']);
+Route::post('/chapters', [ChapterController::class, 'store']);
+Route::put('/chapters/{id}', [ChapterController::class, 'update']);
+Route::delete('/chapters/{id}', [ChapterController::class, 'destroy']);
+Route::post('/sort-chapters', [ChapterController::class, 'sortChapters']);
+
 });
 >>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
+
+

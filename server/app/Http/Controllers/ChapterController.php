@@ -1,227 +1,113 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\front;
 
-use App\Models\Chapter;
-use App\Models\Course;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
 class ChapterController extends Controller
 {
-    public function index(Request $request, $courseId)
-    {
-        $course = Course::where('id', $courseId)
-            ->where('user_id', $request->user()->id)
-            ->first();
+    
 
-        if (!$course) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'Course not found.',
-            ], 404);
-        }
+ public function index(Request $request) {
+    $chapters = Chapter::where('course_id', $request->course_id)
+        ->orderBy('sort_order')
+        ->get();
 
-        $chapters = Chapter::with(['lessons' => function ($query) {
-                $query->orderBy('sort_order')->orderBy('id');
-            }])
-            ->where('course_id', $course->id)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
+    return response()->json([
+        'status' => 200,
+        'data' => $chapters
+    ], 200);
+}
 
+    public function store(Request $request) {
+    $validator = Validator::make($request->all(), [
+        'chapter'   => 'required',
+        'course_id' => 'required'
+    ]);
+
+    if ($validator->fails()) {
         return response()->json([
-            'status' => 200,
-            'data' => $chapters,
-        ], 200);
+            'status' => 400,
+            'errors' => $validator->errors()
+        ], 400);
     }
 
-    public function store(Request $request, $courseId)
-    {
-        $course = Course::where('id', $courseId)
-            ->where('user_id', $request->user()->id)
-            ->first();
+   $chapter = new Chapter();
+$chapter->course_id = $request->course_id;
+$chapter->title = $request->chapter;
+$chapter->sort_order = 1000;
+$chapter->save();
 
-        if (!$course) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'Course not found.',
-            ], 404);
-        }
+return response()->json([
+    'status' => 200,
+    'data' => $chapter,
+    'message' => 'Chapter added successfully.'
+], 200);}
 
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'status' => 'nullable|in:0,1',
-        ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 400,
-                'errors' => $validator->errors(),
-            ], 400);
-        }
+    
+   public function update($id, Request $request) {
+    $chapter = Chapter::find($id);
 
-        $nextSortOrder = (int) Chapter::where('course_id', $course->id)->max('sort_order') + 1;
-
-        $chapter = Chapter::create([
-            'title' => $request->input('title'),
-            'course_id' => $course->id,
-            'sort_order' => $nextSortOrder,
-            'status' => $request->input('status', 1),
-        ]);
-
+    if ($chapter == null) {
         return response()->json([
-            'status' => 200,
-            'data' => $chapter,
-            'message' => 'Chapter saved successfully.',
-        ], 200);
+            'status' => 404,
+            'message' => 'Chapter not found'
+        ], 404);
     }
 
-    public function update(Request $request, $id)
-    {
-        $chapter = Chapter::find($id);
+    $validator = Validator::make($request->all(), [
+        'chapter' => 'required'
+    ]);
+    if ($validator->fails()) {
+    return response()->json([
+        'status' => 400,
+        'errors' => $validator->errors()
+    ], 400);
+}
 
-        if (!$chapter) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'Chapter not found.',
-            ], 404);
-        }
+$chapter->title = $request->chapter;
+$chapter->save();
+$chapter->title = $request->chapter;
+$chapter->save();
 
-        $course = Course::where('id', $chapter->course_id)
-            ->where('user_id', $request->user()->id)
-            ->first();
+return response()->json([
+    'status' => 200,
+    'data' => $chapter,
+    'message' => 'chapter updated successfully.'
+], 200);
+   } 
+   public function destroy($id) {
+    $chapter = Chapter::find($id);
 
-        if (!$course) {
-            return response()->json([
-                'status' => 403,
-                'message' => 'You are not allowed to update this chapter.',
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'status' => 'nullable|in:0,1',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 400,
-                'errors' => $validator->errors(),
-            ], 400);
-        }
-
-        $chapter->title = $request->input('title');
-        $chapter->status = $request->input('status', $chapter->status);
-        $chapter->save();
-
+    if ($chapter == null) {
         return response()->json([
-            'status' => 200,
-            'data' => $chapter,
-            'message' => 'Chapter updated successfully.',
-        ], 200);
+            'status' => 404,
+            'message' => 'Chapter not found'
+        ], 404);
     }
 
-    public function destroy(Request $request, $id)
-    {
-        $chapter = Chapter::find($id);
+    $chapter->delete();
 
-        if (!$chapter) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'Chapter not found.',
-            ], 404);
+    return response()->json([
+        'status' => 200,
+        'message' => 'Chapter deleted successfully.'
+    ], 200);
+}
+public function sortChapters(Request $request) {
+    if (!empty($request->chapters)) {
+        foreach ($request->chapters as $key => $chapter) {
+            Chapter::where('id', $chapter['id'])->update(['sort_order' => $key]);
         }
-
-        $course = Course::where('id', $chapter->course_id)
-            ->where('user_id', $request->user()->id)
-            ->first();
-
-        if (!$course) {
-            return response()->json([
-                'status' => 403,
-                'message' => 'You are not allowed to delete this chapter.',
-            ], 403);
-        }
-
-        $chapter->delete();
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Chapter deleted successfully.',
-        ], 200);
     }
 
-    public function sortChapters(Request $request, $courseId)
-    {
-        $course = Course::where('id', $courseId)
-            ->where('user_id', $request->user()->id)
-            ->first();
+    return response()->json([
+        'status' => 200,
+        'message' => 'Order updated successfully.'
+    ], 200);
+}
 
-        if (!$course) {
-            return response()->json([
-                'status' => 404,
-                'message' => 'Course not found.',
-            ], 404);
-        }
 
-        $validator = Validator::make($request->all(), [
-            'ids' => 'required|array|min:1',
-            'ids.*' => 'required|integer|distinct|exists:chapters,id',
-        ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 400,
-                'errors' => $validator->errors(),
-            ], 400);
-        }
-
-        $ids = array_map('intval', $request->input('ids', []));
-        $count = Chapter::where('course_id', $course->id)
-            ->whereIn('id', $ids)
-            ->count();
-
-        if ($count !== count($ids)) {
-            return response()->json([
-                'status' => 400,
-                'message' => 'Invalid chapter order payload.',
-            ], 400);
-        }
-
-        $allIds = Chapter::where('course_id', $course->id)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->pluck('id')
-            ->map(function ($id) {
-                return (int) $id;
-            })
-            ->toArray();
-
-        $missingIds = array_values(array_diff($allIds, $ids));
-        $finalIds = array_merge($ids, $missingIds);
-
-        DB::transaction(function () use ($finalIds, $course) {
-            foreach ($finalIds as $index => $id) {
-                Chapter::where('course_id', $course->id)
-                    ->where('id', $id)
-                    ->update(['sort_order' => $index + 1]);
-            }
-        });
-
-        $chapters = Chapter::with(['lessons' => function ($query) {
-                $query->orderBy('sort_order')->orderBy('id');
-            }])
-            ->where('course_id', $course->id)
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->get();
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Order updated successfully.',
-            'data' => $chapters,
-        ], 200);
-    }
 }

@@ -284,7 +284,11 @@ const EditCourse = () => {
               ) : (
                 <div className="row g-3 align-items-start">
                   <div className="col-lg-8">
-                    <form onSubmit={handleSubmit(onSubmit)}>
+                    <form onSubmit={handleSubmit(onSubmit)}> 
+                      <ManageChapter
+                      course={course}
+                      params={params }
+                      />
                       <div className="card border-0 shadow-lg">
                         <div className="card-body p-4">
                           <h3 className="h5">Course Details</h3>
@@ -450,6 +454,7 @@ const EditCourse = () => {
                     </div>
                     <div className="mt-3">
                       <EditCover courseId={id} course={courseData} onUploaded={setCourseData} />
+                      <ManageChapter/>
                     </div>
                     <div className="mt-3">
                       <ManageChapter courseId={id} />
