@@ -20,6 +20,8 @@ services:
         VITE_BACKEND_ENDPOINT: 'http://localhost:8000'
     ports:
       - '8000:80'
+    volumes:
+      - ./server:/var/www/html
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +45,7 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
-      - '8080:80'
+      - '8888:80'
     environment:
       PMA_HOST: db
       PMA_PORT: 3306

@@ -6,10 +6,12 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import ManageOutcome from './ManageOutcome';
 import ManageRequirement from './ManageRequirement';
+import EditCover from './EditCover';
 
 const EditCourse = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [course, setCourse] = useState([]);
 
   const {
     register,
@@ -158,6 +160,7 @@ const EditCourse = () => {
               message: result.errors[field][0],
             });
           });
+         setCourse(result.data);
         } else {
           toast.error(result.message || 'Failed to update course.');
         }
@@ -361,6 +364,11 @@ const EditCourse = () => {
                     <ManageOutcome courseId={id} />
                     <div className="mt-3">
                       <ManageRequirement courseId={id} />
+                      <EditCover
+
+                      course={course}
+                      setCourse={setCourse}
+                      />
                     </div>
                   </div>
                 </div>

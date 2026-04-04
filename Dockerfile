@@ -23,11 +23,12 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     zip \
     unzip
-
 # Install Node.js 18
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
@@ -39,7 +40,8 @@ RUN a2enmod rewrite
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 # By default, Apache serves files from /var/www/html.
 # Laravel expects the document root to point to the public directory of its project structure for proper routing and security.
