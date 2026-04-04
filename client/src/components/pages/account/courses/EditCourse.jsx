@@ -1,473 +1,163 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import Layout from '../../../common/Layout';
-import { Link, useNavigate, useParams } from 'react-router-dom';
 import UserSidebar from '../../../common/UserSidebar';
-import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
-import ManageOutcome from './ManageOutcome';
-import ManageRequirement from './ManageRequirement';
-import EditCover from './EditCover';
-<<<<<<< HEAD
-=======
-
->>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
+import ManageChapter from './ManageChapter'; // The component we built first
+import { apiUrl } from '../../../../common/Config';
 
 const EditCourse = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const [course, setCourse] = useState([]);
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [course, setCourse] = useState(null);
+    const [categories, setCategories] = useState([]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
-    getValues,
-    setValue,
-    reset,
-  } = useForm({
-    defaultValues: {
-      title: '',
-      category_id: '',
-      level_id: '',
-      language_id: '',
-      description: '',
-      price: '',
-      cross_price: '',
-      status: 1,
-      is_featured: 'no',
-    },
-  });
+    const token = useMemo(() => {
+        const raw = localStorage.getItem('userInfoLms');
+        return raw ? JSON.parse(raw)?.token : null;
+    }, []);
 
-  const [meta, setMeta] = useState({
-    categories: [],
-    levels: [],
-    languages: [],
-  });
-  const [loading, setLoading] = useState(true);
-  const [courseData, setCourseData] = useState(null);
+    const [form, setForm] = useState({
+        title: '',
+        category_id: '',
+        price: '',
+        description: '',
+        status: '1'
+    });
 
-  const token = useMemo(() => {
-    const rawUserInfo = localStorage.getItem('userInfoLms');
-    if (!rawUserInfo) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(rawUserInfo)?.token || null;
-    } catch (error) {
-      return null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!token) {
-      toast.error('Please login first.');
-      navigate('/account/login');
-      return;
-    }
-
-    const loadEditPageData = async () => {
-      setLoading(true);
-      try {
-        const [metaResponse, courseResponse] = await Promise.all([
-          fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/meta`, {
-            headers: {
-              Accept: 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-          fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}/edit`, {
-            headers: {
-              Accept: 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-        ]);
-
-        const metaResult = await metaResponse.json();
-        const courseResult = await courseResponse.json();
-
-        if (metaResult.status !== 200) {
-          toast.error(metaResult.message || 'Failed to load metadata.');
-          return;
+    useEffect(() => {
+        if (!token) {
+            navigate('/account/login');
+            return;
         }
 
-        if (courseResult.status !== 200) {
-          toast.error(courseResult.message || 'Failed to load course details.');
-          navigate('/account/my-courses');
-          return;
-        }
+        const fetchCourseData = async () => {
+            try {
+                const res = await fetch(`${apiUrl}/courses/${id}/edit`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                const result = await res.json();
+                
+                if (result.status === 200) {
+                    setCourse(result.data.course);
+                    setCategories(result.data.categories || []);
+                    setForm({
+                        title: result.data.course.title || '',
+                        category_id: result.data.course.category_id || '',
+                        price: result.data.course.price || '',
+                        description: result.data.course.description || '',
+                        status: String(result.data.course.status)
+                    });
+                }
+            } catch (err) {
+                toast.error("Failed to load course");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        setMeta({
-          categories: metaResult.categories || [],
-          levels: metaResult.levels || [],
-          languages: metaResult.languages || [],
-        });
+        fetchCourseData();
+    }, [id, token, navigate]);
 
-        const course = courseResult.data;
-        setCourseData(course);
-
-        reset({
-          title: course?.title || '',
-          category_id: course?.category_id || '',
-          level_id: course?.level_id || '',
-          language_id: course?.language_id || '',
-          description: course?.description || '',
-          price: course?.price ?? '',
-          cross_price: course?.cross_price ?? '',
-          status: course?.status ?? 1,
-          is_featured: course?.is_featured || 'no',
-        });
-      } catch (error) {
-        toast.error('Something went wrong while loading course details.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadEditPageData();
-  }, [id, navigate, reset, token]);
-
-  const onSubmit = async (data) => {
-    if (!token) {
-      toast.error('Session expired. Please login again.');
-      navigate('/account/login');
-      return;
-    }
-
-    const payload = {
-      title: data.title,
-      category_id: data.category_id === '' ? null : Number(data.category_id),
-      level_id: data.level_id === '' ? null : Number(data.level_id),
-      language_id: data.language_id === '' ? null : Number(data.language_id),
-      description: data.description || null,
-      price: data.price === '' ? null : Number(data.price),
-      cross_price: data.cross_price === '' ? null : Number(data.cross_price),
-      status: Number(data.status),
-      is_featured: data.is_featured,
-    };
-
-    await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.status === 200) {
-          toast.success(result.message || 'Course updated successfully.');
-        } else if (result.errors) {
-          Object.keys(result.errors).forEach((field) => {
-            setError(field, {
-              type: 'server',
-              message: result.errors[field][0],
+    const handleUpdateCourse = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${apiUrl}/courses/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(form)
             });
-          });
-         setCourse(result.data);
-        } else {
-          toast.error(result.message || 'Failed to update course.');
+            if (res.ok) {
+                toast.success("Course details updated!");
+            }
+        } catch (err) {
+            toast.error("Update failed");
         }
-      })
-      .catch(() => {
-        toast.error('Something went wrong while updating the course.');
-      });
-  };
-
-  const handlePublishToggle = async () => {
-    if (!courseData?.id) {
-      return;
-    }
-
-    if (!token) {
-      toast.error('Session expired. Please login again.');
-      navigate('/account/login');
-      return;
-    }
-
-    const currentValues = getValues();
-    const nextStatus = Number(courseData.status) === 1 ? 0 : 1;
-
-    const payload = {
-      title: currentValues.title,
-      category_id: currentValues.category_id === '' ? null : Number(currentValues.category_id),
-      level_id: currentValues.level_id === '' ? null : Number(currentValues.level_id),
-      language_id: currentValues.language_id === '' ? null : Number(currentValues.language_id),
-      description: currentValues.description || null,
-      price: currentValues.price === '' ? null : Number(currentValues.price),
-      cross_price: currentValues.cross_price === '' ? null : Number(currentValues.cross_price),
-      status: nextStatus,
-      is_featured: currentValues.is_featured,
     };
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+    if (loading) return <Layout><div className="container p-5">Loading...</div></Layout>;
 
-      const result = await response.json();
+    return (
+        <Layout>
+            <section className="section-4">
+                <div className="container pb-5 pt-4">
+                    {/* Breadcrumb */}
+                    <nav aria-label="breadcrumb">
+                        <ol className="breadcrumb">
+                            <li className="breadcrumb-item"><Link to="/account/dashboard">Account</Link></li>
+                            <li className="breadcrumb-item active">Edit Course</li>
+                        </ol>
+                    </nav>
 
-      if (result.status === 200) {
-        setCourseData(result.data);
-        setValue('status', result.data.status);
-        toast.success(result.data.status === 1 ? 'Course published successfully.' : 'Course unpublished successfully.');
-      } else if (result.errors) {
-        Object.keys(result.errors).forEach((field) => {
-          setError(field, {
-            type: 'server',
-            message: result.errors[field][0],
-          });
-        });
-      } else {
-        toast.error(result.message || 'Failed to update course status.');
-      }
-    } catch (error) {
-      toast.error('Something went wrong while updating the course status.');
-    }
-  };
-
-  return (
-    <Layout>
-      <section className="section-4">
-        <div className="container pb-5 pt-3">
-          <nav aria-label="breadcrumb">
-            <ol className="breadcrumb">
-              <li className="breadcrumb-item">
-                <Link to="/account/dashboard">Account</Link>
-              </li>
-              <li className="breadcrumb-item active" aria-current="page">
-                Edit Course
-              </li>
-            </ol>
-          </nav>
-
-          <div className="row">
-            <div className="col-md-12 mt-5 mb-3">
-              <div className="d-flex justify-content-between align-items-center gap-3">
-                <h2 className="h4 mb-0 pb-0">Edit Course</h2>
-                <div className="d-flex align-items-center gap-2">
-                  <button
-                    type="button"
-                    className={`btn ${Number(courseData?.status) === 1 ? 'btn-success' : 'btn-warning'} text-white`}
-                    onClick={handlePublishToggle}
-                  >
-                    {Number(courseData?.status) === 1 ? 'Unpublish' : 'Publish'}
-                  </button>
-                  <button type="button" className="btn btn-secondary" onClick={() => navigate('/account/my-courses')}>
-                    Back
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-lg-3 account-sidebar">
-              <UserSidebar />
-            </div>
-
-            <div className="col-lg-9">
-              {loading ? (
-                <div className="card border-0 shadow-lg">
-                  <div className="card-body p-4">
-                    <p className="mb-0">Loading course details...</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="row g-3 align-items-start">
-                  <div className="col-lg-8">
-                    <form onSubmit={handleSubmit(onSubmit)}> 
-                      <ManageChapter
-                      course={course}
-                      params={params }
-                      />
-                      <div className="card border-0 shadow-lg">
-                        <div className="card-body p-4">
-                          <h3 className="h5">Course Details</h3>
-                          <hr />
-
-                          <div className="mb-3">
-                            <label htmlFor="title">Title</label>
-                            <input
-                              id="title"
-                              type="text"
-                              {...register('title', {
-                                required: 'Course title is required.',
-                                minLength: {
-                                  value: 5,
-                                  message: 'Course title must be at least 5 characters.',
-                                },
-                              })}
-                              className={`form-control ${errors.title ? 'is-invalid' : ''}`}
-                              placeholder="Enter course title"
-                            />
-                            {errors.title && <p className="invalid-feedback">{errors.title.message}</p>}
-                          </div>
-
-                          <div className="mb-3">
-                            <label htmlFor="category_id">Category</label>
-                            <select
-                              id="category_id"
-                              {...register('category_id')}
-                              className={`form-control ${errors.category_id ? 'is-invalid' : ''}`}
-                            >
-                              <option value="">Select category</option>
-                              {meta.categories.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                  {category.name}
-                                </option>
-                              ))}
-                            </select>
-                            {errors.category_id && <p className="invalid-feedback">{errors.category_id.message}</p>}
-                          </div>
-
-                          <div className="mb-3">
-                            <label htmlFor="level_id">Level</label>
-                            <select
-                              id="level_id"
-                              {...register('level_id')}
-                              className={`form-control ${errors.level_id ? 'is-invalid' : ''}`}
-                            >
-                              <option value="">Select level</option>
-                              {meta.levels.map((level) => (
-                                <option key={level.id} value={level.id}>
-                                  {level.name}
-                                </option>
-                              ))}
-                            </select>
-                            {errors.level_id && <p className="invalid-feedback">{errors.level_id.message}</p>}
-                          </div>
-
-                          <div className="mb-3">
-                            <label htmlFor="language_id">Language</label>
-                            <select
-                              id="language_id"
-                              {...register('language_id')}
-                              className={`form-control ${errors.language_id ? 'is-invalid' : ''}`}
-                            >
-                              <option value="">Select language</option>
-                              {meta.languages.map((language) => (
-                                <option key={language.id} value={language.id}>
-                                  {language.name}
-                                </option>
-                              ))}
-                            </select>
-                            {errors.language_id && <p className="invalid-feedback">{errors.language_id.message}</p>}
-                          </div>
-
-                          <div className="mb-3">
-                            <label htmlFor="description">Description</label>
-                            <textarea
-                              id="description"
-                              rows="5"
-                              {...register('description')}
-                              className={`form-control ${errors.description ? 'is-invalid' : ''}`}
-                              placeholder="Write course description"
-                            />
-                            {errors.description && <p className="invalid-feedback">{errors.description.message}</p>}
-                          </div>
-
-                          <h3 className="h5 mt-3">Pricing</h3>
-                          <hr />
-
-                          <div className="mb-3">
-                            <label htmlFor="price">Sell Price</label>
-                            <input
-                              id="price"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              {...register('price')}
-                              className={`form-control ${errors.price ? 'is-invalid' : ''}`}
-                              placeholder="0.00"
-                            />
-                            {errors.price && <p className="invalid-feedback">{errors.price.message}</p>}
-                          </div>
-
-                          <div className="mb-3">
-                            <label htmlFor="cross_price">Cross Price</label>
-                            <input
-                              id="cross_price"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              {...register('cross_price')}
-                              className={`form-control ${errors.cross_price ? 'is-invalid' : ''}`}
-                              placeholder="0.00"
-                            />
-                            {errors.cross_price && <p className="invalid-feedback">{errors.cross_price.message}</p>}
-                          </div>
-
-                          <div className="row">
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="is_featured">Featured</label>
-                              <select
-                                id="is_featured"
-                                {...register('is_featured')}
-                                className={`form-control ${errors.is_featured ? 'is-invalid' : ''}`}
-                              >
-                                <option value="no">No</option>
-                                <option value="yes">Yes</option>
-                              </select>
-                              {errors.is_featured && <p className="invalid-feedback">{errors.is_featured.message}</p>}
-                            </div>
-
-                            <div className="col-md-6 mb-3">
-                              <label htmlFor="status">Status</label>
-                              <select
-                                id="status"
-                                {...register('status')}
-                                className={`form-control ${errors.status ? 'is-invalid' : ''}`}
-                              >
-                                <option value={1}>Active</option>
-                                <option value={0}>Inactive</option>
-                              </select>
-                              {errors.status && <p className="invalid-feedback">{errors.status.message}</p>}
-                            </div>
-                          </div>
-
-                          <button className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? 'Updating...' : 'Update'}
-                          </button>
+                    <div className="row">
+                        <div className="col-lg-3">
+                            <UserSidebar />
                         </div>
-                      </div>
-                    </form>
-                  </div>
 
-                  <div className="col-lg-4">
-                    <ManageOutcome courseId={id} />
-                    <div className="mt-3">
-                      <ManageRequirement courseId={id} />
-                      <EditCover
+                        <div className="col-lg-9">
+                            {/* General Information Card */}
+                            <div className="card border-0 shadow-sm mb-4">
+                                <div className="card-body p-4">
+                                    <h3 className="h5 mb-3 fw-bold">General Information</h3>
+                                    <hr />
+                                    <form onSubmit={handleUpdateCourse}>
+                                        <div className="mb-3">
+                                            <label className="form-label">Course Title</label>
+                                            <input 
+                                                type="text" 
+                                                className="form-control" 
+                                                value={form.title} 
+                                                onChange={e => setForm({...form, title: e.target.value})} 
+                                            />
+                                        </div>
+                                        <div className="row">
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">Category</label>
+                                                <select 
+                                                    className="form-select" 
+                                                    value={form.category_id}
+                                                    onChange={e => setForm({...form, category_id: e.target.value})}
+                                                >
+                                                    <option value="">Select Category</option>
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">Price ($)</label>
+                                                <input 
+                                                    type="number" 
+                                                    className="form-control" 
+                                                    value={form.price} 
+                                                    onChange={e => setForm({...form, price: e.target.value})} 
+                                                />
+                                            </div>
+                                        </div>
+                                        <button className="btn btn-primary">Update Basic Info</button>
+                                    </form>
+                                </div>
+                            </div>
 
-                      course={course}
-                      setCourse={setCourse}
-                      />
+                            {/* Chapter & Lesson Management Section */}
+                            {/* This pulls in the UI from your first image */}
+                            <ManageChapter 
+                                course={course} 
+                                params={{ id: id }} 
+                            />
+                        </div>
                     </div>
-                    <div className="mt-3">
-                      <EditCover courseId={id} course={courseData} onUploaded={setCourseData} />
-                      <ManageChapter/>
-                    </div>
-                    <div className="mt-3">
-                      <ManageChapter courseId={id} />
-                    </div>
-                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-    </Layout>
-  );
+            </section>
+        </Layout>
+    );
 };
 
 export default EditCourse;
