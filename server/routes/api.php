@@ -115,4 +115,7 @@ Route::post('/sort-chapters', [ChapterController::class, 'sortChapters']);
 });
 >>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 
+Route::post('/lessons',[LessonController::class, 'store']);
+Route::put('/lessons/{id}',[LessonController::class, 'update']);
+Route::delete('/lessons/{id}',[LessonController::class, 'destroy']);
 
