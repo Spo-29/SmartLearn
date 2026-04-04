@@ -12,10 +12,6 @@ use App\Models\Level;
 use App\Models\Language;
 use Intervention\Image\Facades\Image;
 
-use Illuminate\Support\Facades\File;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
-
 class CourseController extends Controller
 {
     public function index()
@@ -57,22 +53,26 @@ class CourseController extends Controller
         ], 200);
     }
 
-
+    /**
+     * Updated to load nested Lessons for the ManageChapter component
+     */
     public function show($id) {
-    $course = Course::with('chapters')->find($id);
+        // We need chapters AND their nested lessons for the accordion to work
+        $course = Course::with(['chapters.lessons'])->find($id);
 
-    if ($course == null) {
+        if ($course == null) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Course not found',
+            ], 404);
+        }
+
         return response()->json([
-            'status' => 404,
-            'message' => 'Course not found',
-        ], 404);
+            'status' => 200,
+            'data' => $course,
+        ], 200);
     }
 
-    return response()->json([
-        'status' => 200,
-        'data' => $course,
-    ], 200);
-}
     public function metadata()
     {
         return response()->json([
@@ -98,7 +98,8 @@ class CourseController extends Controller
 
     public function edit(Request $request, $id)
     {
-        $course = Course::where('id', $id)
+        // Load relationships so the edit page has all metadata ready
+        $course = Course::with(['chapters.lessons'])->where('id', $id)
             ->where('user_id', $request->user()->id)
             ->first();
 
@@ -111,7 +112,10 @@ class CourseController extends Controller
 
         return response()->json([
             'status' => 200,
-            'data' => $course,
+            'data' => [
+                'course' => $course,
+                'categories' => Category::where('status', 1)->get()
+            ],
         ], 200);
     }
 
@@ -165,9 +169,6 @@ class CourseController extends Controller
         ], 200);
     }
 
-<<<<<<< HEAD
-    
-=======
     public function saveCourseImage(Request $request, $id)
     {
         $course = Course::where('id', $id)
@@ -178,65 +179,44 @@ class CourseController extends Controller
             return response()->json([
                 'status' => 404,
                 'message' => 'Course not found.',
->>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
-<<<<<<< HEAD
-           
-=======
             'image' => 'required|image|mimes:jpeg,jpg,png|max:5120',
->>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 400,
-<<<<<<< HEAD
-               
-=======
                 'errors' => $validator->errors(),
             ], 400);
         }
 
         $image = $request->file('image');
-        $extension = strtolower($image->getClientOriginalExtension());
-        $fileName = time() . '_' . uniqid() . '.' . $extension;
+        $fileName = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
 
         $mainDirectory = public_path('upload/course');
         $smallDirectory = public_path('upload/course/small');
 
-        if (!File::exists($mainDirectory)) {
-            File::makeDirectory($mainDirectory, 0755, true);
-        }
-
-        if (!File::exists($smallDirectory)) {
-            File::makeDirectory($smallDirectory, 0755, true);
-        }
+        if (!File::exists($mainDirectory)) File::makeDirectory($mainDirectory, 0755, true);
+        if (!File::exists($smallDirectory)) File::makeDirectory($smallDirectory, 0755, true);
 
         $this->deleteCourseImages($course->image);
 
         $image->move($mainDirectory, $fileName);
 
-        $smallImagePath = $smallDirectory . DIRECTORY_SEPARATOR . $fileName;
-        Image::make($mainDirectory . DIRECTORY_SEPARATOR . $fileName)
-            ->fit(480, 270, function ($constraint) {
-                $constraint->upsize();
-            })
-            ->save($smallImagePath, 85);
+        // Thumbnail Creation
+        Image::make($mainDirectory . '/' . $fileName)
+            ->fit(480, 270)
+            ->save($smallDirectory . '/' . $fileName, 85);
 
         $course->image = $fileName;
         $course->save();
-        $course->refresh();
->>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 
         return response()->json([
             'status' => 200,
             'data' => $course,
-<<<<<<< HEAD
-            
-=======
             'message' => 'Course image uploaded successfully.',
         ], 200);
     }
@@ -265,20 +245,15 @@ class CourseController extends Controller
 
     private function deleteCourseImages($fileName)
     {
-        if (!$fileName) {
-            return;
-        }
+        if (!$fileName) return;
 
-        $mainPath = public_path('upload/course/' . $fileName);
-        $smallPath = public_path('upload/course/small/' . $fileName);
+        $paths = [
+            public_path('upload/course/' . $fileName),
+            public_path('upload/course/small/' . $fileName)
+        ];
 
-        if (File::exists($mainPath)) {
-            File::delete($mainPath);
-        }
-
-        if (File::exists($smallPath)) {
-            File::delete($smallPath);
+        foreach ($paths as $path) {
+            if (File::exists($path)) File::delete($path);
         }
     }
->>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 }
