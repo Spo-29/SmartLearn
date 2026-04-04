@@ -1,8 +1,52 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Layout from '../../common/Layout';
 import { Link } from 'react-router-dom';
 import UserSidebar from '../../common/UserSidebar';
 const Dashboard = () => {
+  const [activeCourses, setActiveCourses] = useState(0);
+
+  const token = useMemo(() => {
+    const rawUserInfo = localStorage.getItem('userInfoLms');
+
+    if (!rawUserInfo) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawUserInfo)?.token || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const loadCourseStats = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/my-courses`, {
+          headers: {
+            Accept: 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await response.json();
+
+        if (result.status === 200) {
+          const courses = result.data || [];
+          setActiveCourses(courses.filter((course) => Number(course.status) === 1).length);
+        }
+      } catch {
+        setActiveCourses(0);
+      }
+    };
+
+    loadCourseStats();
+  }, [token]);
+
   return (
     <Layout>
       <section className="section-4">
@@ -10,7 +54,7 @@ const Dashboard = () => {
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb">
               <li className="breadcrumb-item">
-                <Link to="/account">Account</Link>
+                <Link to="/account/profile">Account</Link>
               </li>
               <li className="breadcrumb-item active" aria-current="page">
                 Dashboard
@@ -51,11 +95,11 @@ const Dashboard = () => {
                 <div className="col-md-4">
                   <div className="card shadow ">
                     <div className="card-body p-3">
-                      <h2>0</h2>
+                      <h2>{activeCourses}</h2>
                       <span>Active Courses</span>
                     </div>
                     <div className="card-footer">
-                      <Link to="/admin/orders">View Courses</Link>
+                      <Link to="/account/my-courses?active=1">View Courses</Link>
                     </div>
                   </div>
                 </div>

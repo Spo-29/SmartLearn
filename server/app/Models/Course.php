@@ -19,6 +19,8 @@ class Course extends Model
     }
     use HasFactory;
 
+    protected $appends = ['course_small_image'];
+
     protected $fillable = [
         'title',
         'user_id',
@@ -55,17 +57,17 @@ class Course extends Model
 
     public function chapters()
     {
-        return $this->hasMany(Chapter::class);
+        return $this->hasMany(Chapter::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function outcomes()
     {
-        return $this->hasMany(Outcome::class);
+        return $this->hasMany(Outcome::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function requirements()
     {
-        return $this->hasMany(Requirement::class);
+        return $this->hasMany(Requirement::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function enrollments()
@@ -81,5 +83,14 @@ class Course extends Model
     public function activities()
     {
         return $this->hasMany(Activity::class);
+    }
+
+    public function getCourseSmallImageAttribute()
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        return url('upload/course/small/' . $this->image);
     }
 }

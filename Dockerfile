@@ -22,6 +22,8 @@ ARG VITE_BACKEND_ENDPOINT
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
@@ -40,8 +42,12 @@ RUN a2enmod rewrite
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+<<<<<<< HEAD
+
+=======
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 
 # By default, Apache serves files from /var/www/html.
 # Laravel expects the document root to point to the public directory of its project structure for proper routing and security.

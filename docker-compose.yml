@@ -21,7 +21,11 @@ services:
     ports:
       - '8000:80'
     volumes:
-      - ./server:/var/www/html
+<<<<<<< HEAD
+      - 
+=======
+      - ./server/public/upload:/var/www/html/public/upload
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
     depends_on:
       db:
         condition: service_healthy

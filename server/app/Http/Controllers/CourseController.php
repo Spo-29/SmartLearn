@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\File;
 use App\Models\Course;
 use App\Models\Category;
 use App\Models\Level;
 use App\Models\Language;
+use Intervention\Image\Facades\Image;
 
 use Illuminate\Support\Facades\File;
 use Intervention\Image\ImageManager;
@@ -62,6 +64,19 @@ class CourseController extends Controller
             'categories' => Category::where('status', 1)->get(),
             'levels' => Level::where('status', 1)->get(),
             'languages' => Language::where('status', 1)->get(),
+        ], 200);
+    }
+
+    public function myCourses(Request $request)
+    {
+        $courses = Course::with(['category', 'level', 'language'])
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json([
+            'status' => 200,
+            'data' => $courses,
         ], 200);
     }
 
@@ -134,68 +149,120 @@ class CourseController extends Controller
         ], 200);
     }
 
-    public function saveCourseImage($id, Request $request)
+<<<<<<< HEAD
+    
+=======
+    public function saveCourseImage(Request $request, $id)
     {
-        $course = Course::find($id);
+        $course = Course::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
 
-        if ($course == null) {
+        if (!$course) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Course not found.'
+                'message' => 'Course not found.',
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
-            'image' => 'required|mimes:png,jpg,jpeg'
+<<<<<<< HEAD
+           
+=======
+            'image' => 'required|image|mimes:jpeg,jpg,png|max:5120',
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 400,
-                'errors' => $validator->errors()
+<<<<<<< HEAD
+               
+=======
+                'errors' => $validator->errors(),
             ], 400);
         }
-        if ($course->image != "") {
-    if (File::exists(public_path('uploads/course/' . $course->image))) {
-        File::delete(public_path('uploads/course/' . $course->image));
-    }
 
-    if (File::exists(public_path('uploads/course/small/' . $course->image))) {
-        File::delete(public_path('uploads/course/small/' . $course->image));
-    }
-}
+        $image = $request->file('image');
+        $extension = strtolower($image->getClientOriginalExtension());
+        $fileName = time() . '_' . uniqid() . '.' . $extension;
 
-$image = $request->image;
-$ext = $image->getClientOriginalExtension();
-$imageName = strtotime('now') . '-' . $id . '.' . $ext;
+        $mainDirectory = public_path('upload/course');
+        $smallDirectory = public_path('upload/course/small');
 
-// create folders if not exists
-/*if (!File::exists(public_path('uploads/course'))) {
-    File::makeDirectory(public_path('uploads/course'), 0755, true);
-}
+        if (!File::exists($mainDirectory)) {
+            File::makeDirectory($mainDirectory, 0755, true);
+        }
 
-if (!File::exists(public_path('uploads/course/small'))) {
-    File::makeDirectory(public_path('uploads/course/small'), 0755, true);
-}*/
+        if (!File::exists($smallDirectory)) {
+            File::makeDirectory($smallDirectory, 0755, true);
+        }
 
-// move original image
-$image->move(public_path('uploads/course'), $imageName);
+        $this->deleteCourseImages($course->image);
 
-// create image thumbnail
-$manager = new ImageManager(Driver::class);
-$img = $manager->read(public_path('uploads/course/' . $imageName));
+        $image->move($mainDirectory, $fileName);
 
-// crop best fit and save thumbnail
-$img->cover(750, 450);
-$img->save(public_path('uploads/course/small/' . $imageName));
+        $smallImagePath = $smallDirectory . DIRECTORY_SEPARATOR . $fileName;
+        Image::make($mainDirectory . DIRECTORY_SEPARATOR . $fileName)
+            ->fit(480, 270, function ($constraint) {
+                $constraint->upsize();
+            })
+            ->save($smallImagePath, 85);
 
-$course->image = $imageName;
-$course->save();
+        $course->image = $fileName;
+        $course->save();
+        $course->refresh();
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 
         return response()->json([
             'status' => 200,
             'data' => $course,
-            'message' => 'Image uploaded successfully.'
+<<<<<<< HEAD
+            
+=======
+            'message' => 'Course image uploaded successfully.',
         ], 200);
     }
+
+    public function destroy(Request $request, $id)
+    {
+        $course = Course::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (!$course) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Course not found.',
+            ], 404);
+        }
+
+        $this->deleteCourseImages($course->image);
+        $course->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Course deleted successfully.',
+        ], 200);
+    }
+
+    private function deleteCourseImages($fileName)
+    {
+        if (!$fileName) {
+            return;
+        }
+
+        $mainPath = public_path('upload/course/' . $fileName);
+        $smallPath = public_path('upload/course/small/' . $fileName);
+
+        if (File::exists($mainPath)) {
+            File::delete($mainPath);
+        }
+
+        if (File::exists($smallPath)) {
+            File::delete($smallPath);
+        }
+    }
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 }
