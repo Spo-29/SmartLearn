@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Course extends Model
-{
+{   
+
+   protected $appends = ['course_small_image'];
+
+    function getCourseSmallImageAttribute() {
+        if ($this->image == "") {
+            return "";
+        }
+
+        return asset('uploads/course/small/'.$this->image);
+    }
     use HasFactory;
 
     protected $appends = ['course_small_image'];

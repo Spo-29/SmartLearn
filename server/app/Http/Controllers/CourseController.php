@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Http\Controllers\Controller;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
@@ -12,28 +12,32 @@ use App\Models\Level;
 use App\Models\Language;
 use Intervention\Image\Facades\Image;
 
+use Illuminate\Support\Facades\File;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+
 class CourseController extends Controller
 {
-    //
-
     public function index()
     {
         return view('course.index');
-    }   
+    }
 
     public function store(Request $request)
     {
-       $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'title' => 'required|min:5',
             'status' => 'nullable|in:0,1'
-            
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => 400, 'errors' => $validator->errors()], 400);
+            return response()->json([
+                'status' => 400,
+                'errors' => $validator->errors()
+            ], 400);
         }
 
-        $course= new Course();
+        $course = new Course();
         $course->title = $request->input('title');
         $course->category_id = $request->input('category_id');
         $course->level_id = $request->input('level_id');
@@ -45,11 +49,12 @@ class CourseController extends Controller
         $course->status = $request->input('status', 1);
         $course->user_id = $request->user()->id;
         $course->save();
+
         return response()->json([
             'status' => 200,
             'data' => $course,
             'message' => 'Course has been created successfully'
-        ],200);
+        ], 200);
     }
 
     public function metadata()
@@ -120,7 +125,10 @@ class CourseController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => 400, 'errors' => $validator->errors()], 400);
+            return response()->json([
+                'status' => 400,
+                'errors' => $validator->errors()
+            ], 400);
         }
 
         $course->title = $request->input('title');
@@ -141,6 +149,9 @@ class CourseController extends Controller
         ], 200);
     }
 
+<<<<<<< HEAD
+    
+=======
     public function saveCourseImage(Request $request, $id)
     {
         $course = Course::where('id', $id)
@@ -151,16 +162,24 @@ class CourseController extends Controller
             return response()->json([
                 'status' => 404,
                 'message' => 'Course not found.',
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
+<<<<<<< HEAD
+           
+=======
             'image' => 'required|image|mimes:jpeg,jpg,png|max:5120',
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 400,
+<<<<<<< HEAD
+               
+=======
                 'errors' => $validator->errors(),
             ], 400);
         }
@@ -194,10 +213,14 @@ class CourseController extends Controller
         $course->image = $fileName;
         $course->save();
         $course->refresh();
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 
         return response()->json([
             'status' => 200,
             'data' => $course,
+<<<<<<< HEAD
+            
+=======
             'message' => 'Course image uploaded successfully.',
         ], 200);
     }
@@ -241,4 +264,5 @@ class CourseController extends Controller
             File::delete($smallPath);
         }
     }
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
 }

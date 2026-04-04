@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+
+=======
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { FilePond, registerPlugin } from 'react-filepond';
@@ -122,3 +125,4 @@ const EditCover = ({ courseId, course, onUploaded }) => {
 };
 
 export default EditCover;
+>>>>>>> f0f72b295e3aec77a434333b4cab6148d3b5ba2a
