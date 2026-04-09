@@ -11,6 +11,7 @@ import WatchCourse from './components/pages/account/WatchCourse';
 import Dashboard from './components/pages/account/Dashboard';
 import MyAccount from './components/pages/account/MyAccount';
 import { RequireAuth } from './components/common/RequireAuth';
+import { RequireAdmin } from './components/common/RequireAdmin';
 import { AuthProvider } from './components/context/Auth';
 import { Toaster } from 'react-hot-toast';
 import CreateCourse from './components/pages/account/courses/CreateCourse';
@@ -18,6 +19,7 @@ import EditCourse from './components/pages/account/courses/EditCourse';
 import EditLesson from './components/pages/account/courses/EditLesson';
 import LessonBasicInfo from './components/pages/account/courses/LessonBasicInfo';
 import CourseDetails from './components/pages/account/courses/CourseDetails';
+import AdminDashboard from './components/pages/admin/AdminDashboard';
 
 function App() {
   return (
@@ -69,6 +71,14 @@ function App() {
             />
             <Route path="/account/login" element={<Login />} />
             <Route path="/account/register" element={<Register />} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <RequireAdmin>
+                  <AdminDashboard />
+                </RequireAdmin>
+              }
+            />
             <Route
               path="/account/profile"
               element={

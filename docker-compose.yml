@@ -17,6 +17,8 @@ services:
         DB_DATABASE: smartlearn
         DB_USERNAME: root
         DB_PASSWORD: secret
+        ADMIN_EMAIL: waliza@gmail.com
+        ADMIN_PASSWORD: waliza123
         VITE_BACKEND_ENDPOINT: 'http://localhost:8000'
     ports:
       - '8000:80'

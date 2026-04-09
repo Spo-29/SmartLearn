@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
@@ -65,6 +66,7 @@ Route::get('/courses/{id}/reviews', [ReviewController::class, 'index'])->whereNu
 // Account routes
 Route::post('/register', [AccountController::class, 'register']);
 Route::post('/authenticate', [AccountController::class, 'authenticate']);
+Route::post('/admin/authenticate', [AdminController::class, 'authenticate']);
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/account/profile', [AccountController::class, 'profile']);
     Route::put('/account/profile', [AccountController::class, 'updateProfile']);
@@ -103,4 +105,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/lessons/{id}/video', [LessonController::class, 'uploadVideo'])->whereNumber('id');
     Route::delete('/lessons/{id}/video', [LessonController::class, 'deleteVideo'])->whereNumber('id');
     Route::delete('/lessons/{id}', [LessonController::class, 'destroy'])->whereNumber('id');
+
+    Route::group(['middleware' => ['check.admin']], function () {
+        Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+        Route::get('/admin/courses', [AdminController::class, 'courses']);
+        Route::put('/admin/courses/{id}/status', [AdminController::class, 'updateCourseStatus'])->whereNumber('id');
+        Route::delete('/admin/courses/{id}', [AdminController::class, 'destroyCourse'])->whereNumber('id');
+    });
 });

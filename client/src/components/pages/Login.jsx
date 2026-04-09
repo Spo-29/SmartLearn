@@ -31,6 +31,8 @@ const Login = () => {
             token: result.token,
             id: result.id,
             name: result.name,
+            email: result.email || data.email,
+            isAdmin: Boolean(result.is_admin),
           };
           localStorage.setItem('userInfoLms', JSON.stringify(userInfo));
           login(userInfo);

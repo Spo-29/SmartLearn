@@ -3,13 +3,7 @@ import Layout from '../../common/Layout';
 import { Link } from 'react-router-dom';
 import UserSidebar from '../../common/UserSidebar';
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    sales: 0,
-    enrolledUsers: 0,
-    activeCourses: 0,
-  });
-
-  const token = useMemo(() => {
+  const userInfo = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
 
     if (!rawUserInfo) {
@@ -17,11 +11,20 @@ const Dashboard = () => {
     }
 
     try {
-      return JSON.parse(rawUserInfo)?.token || null;
+      return JSON.parse(rawUserInfo);
     } catch {
       return null;
     }
   }, []);
+
+  const token = userInfo?.token || null;
+  const isAdmin = Boolean(userInfo?.isAdmin) || String(userInfo?.email || '').toLowerCase() === 'waliza@gmail.com';
+
+  const [stats, setStats] = useState({
+    sales: 0,
+    enrolledUsers: 0,
+    activeCourses: 0,
+  });
 
   useEffect(() => {
     if (!token) {
@@ -75,6 +78,11 @@ const Dashboard = () => {
             <div className="col-md-12 mt-5 mb-3">
               <div className="d-flex justify-content-between">
                 <h2 className="h4 mb-0 pb-0">Dashboard</h2>
+                {isAdmin ? (
+                  <Link to="/admin/dashboard" className="btn btn-primary btn-sm">
+                    Admin Dashboard
+                  </Link>
+                ) : null}
               </div>
             </div>
             <div className="col-lg-3 account-sidebar">

@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Accordion, Card, ListGroup } from 'react-bootstrap';
 import toast from 'react-hot-toast';
 import Layout from '../common/Layout';
-import { convertMinutesToHours } from '../../utils/convertMinutesToHours';
 
 const Detail = () => {
   const { id } = useParams();
@@ -138,7 +137,6 @@ const Detail = () => {
 
   const totalChapters = Number(course?.chapters_count || 0);
   const totalLessons = Number(course?.lessons_count || 0);
-  const totalDuration = convertMinutesToHours(Number(course?.lessons_duration_sum || 0));
   const averageRating = Number(course?.average_rating || 0);
   const reviews = course?.reviews || [];
 
@@ -179,17 +177,13 @@ const Detail = () => {
               </div>
 
               <div className="row mt-4">
-                <div className="col-md-4">
+                <div className="col-md-6">
                   <span className="text-muted d-block">Total Chapters</span>
                   <span className="fw-bold">{totalChapters}</span>
                 </div>
-                <div className="col-md-4">
+                <div className="col-md-6">
                   <span className="text-muted d-block">Total Lessons</span>
                   <span className="fw-bold">{totalLessons}</span>
-                </div>
-                <div className="col-md-4">
-                  <span className="text-muted d-block">Course Length</span>
-                  <span className="fw-bold">{totalDuration}</span>
                 </div>
               </div>
 
@@ -344,7 +338,6 @@ const Detail = () => {
                   <ListGroup variant="flush">
                     <ListGroup.Item className="ps-0">{totalChapters} chapters</ListGroup.Item>
                     <ListGroup.Item className="ps-0">{totalLessons} lessons</ListGroup.Item>
-                    <ListGroup.Item className="ps-0">{totalDuration} total course length</ListGroup.Item>
                   </ListGroup>
                 </Card.Footer>
               </div>

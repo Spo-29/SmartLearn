@@ -47,15 +47,21 @@ class AccountController extends Controller
             ], 400);
         }
 
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+        $email = strtolower(trim((string) $request->input('email')));
+        $this->ensureConfiguredAdminUser($email);
+
+        if (Auth::attempt(['email' => $email, 'password' => $request->password])) {
             $user = User::find(Auth::user()->id);
             $token = $user->createToken('token')->plainTextToken;
+            $isAdmin = strtolower((string) $user->email) === strtolower((string) env('ADMIN_EMAIL', 'waliza@gmail.com'));
 
             return response()->json([
                 'status' => 200,
                 'token' => $token,
                 'name' => $user->name,
-                'id' => Auth::user()->id
+                'id' => Auth::user()->id,
+                'email' => $user->email,
+                'is_admin' => $isAdmin,
             ], 200);
         } else {
             return response()->json([
@@ -68,6 +74,7 @@ class AccountController extends Controller
     public function profile(Request $request)
     {
         $user = $request->user();
+        $isAdmin = strtolower((string) $user->email) === strtolower((string) env('ADMIN_EMAIL', 'waliza@gmail.com'));
 
         return response()->json([
             'status' => 200,
@@ -75,6 +82,7 @@ class AccountController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'is_admin' => $isAdmin,
             ],
         ], 200);
     }
@@ -112,5 +120,34 @@ class AccountController extends Controller
                 'email' => $user->email,
             ],
         ], 200);
+    }
+
+    private function ensureConfiguredAdminUser($email)
+    {
+        $adminEmail = strtolower((string) env('ADMIN_EMAIL', 'waliza@gmail.com'));
+
+        if (strtolower((string) $email) !== $adminEmail) {
+            return;
+        }
+
+        $adminPassword = (string) env('ADMIN_PASSWORD', 'waliza123');
+
+        $user = User::whereRaw('LOWER(email) = ?', [$adminEmail])->first();
+
+        if (!$user) {
+            $user = new User();
+            $user->name = 'Admin';
+            $user->email = $adminEmail;
+            $user->email_verified_at = now();
+            $user->password = Hash::make($adminPassword);
+            $user->save();
+
+            return;
+        }
+
+        if (!Hash::check($adminPassword, $user->password)) {
+            $user->password = Hash::make($adminPassword);
+            $user->save();
+        }
     }
 }
