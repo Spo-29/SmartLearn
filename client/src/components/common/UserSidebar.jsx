@@ -39,11 +39,6 @@ const UserSidebar = () => {
               <FaDesktop size={16} className="me-2" /> My Courses
             </Link>
           </li>
-          <li className="d-flex align-items-center ">
-            <Link to="/account/change-password">
-              <FaUserLock size={16} className="me-2" /> Change Password
-            </Link>
-          </li>
           <li>
             <a onClick={handleLogout} className="text-danger" style={{cursor: 'pointer'}}>
               <MdLogout size={16} className="me-2" /> Logout

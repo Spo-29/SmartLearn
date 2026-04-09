@@ -473,7 +473,11 @@ const ManageChapter = ({ courseId }) => {
                               <button
                                 type="button"
                                 className="btn btn-link p-0 text-start text-decoration-none small fw-semibold"
-                                onClick={() => navigate(`/account/courses/${courseId}/lessons/${lesson.id}`)}
+                                onClick={() =>
+                                  navigate(`/account/courses/${courseId}/lessons/${lesson.id}`, {
+                                    state: { from: `/account/courses/edit/${courseId}` },
+                                  })
+                                }
                                 title="View lesson"
                               >
                                 {lesson.title}

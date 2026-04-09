@@ -73,9 +73,7 @@ const Login = () => {
                     className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                     placeholder="Email"
                   />
-                  {errors.email && (
-                    <div className="text-danger">{errors.email.message}</div>
-                  )}
+                  {errors.email && <div className="text-danger">{errors.email.message}</div>}
                 </div>
 
                 <div className="mb-3">
@@ -90,9 +88,7 @@ const Login = () => {
                     className={`form-control ${errors.password ? 'is-invalid' : ''}`}
                     placeholder="Password"
                   />
-                  {errors.password && (
-                    <div className="text-danger">{errors.password.message}</div>
-                  )}
+                  {errors.password && <div className="text-danger">{errors.password.message}</div>}
                 </div>
 
                 <div className="d-flex justify-content-between align-items-center">

@@ -50,6 +50,11 @@ class Course extends Model
         return $this->hasMany(Chapter::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    public function lessons()
+    {
+        return $this->hasManyThrough(Lesson::class, Chapter::class);
+    }
+
     public function outcomes()
     {
         return $this->hasMany(Outcome::class)->orderBy('sort_order')->orderBy('id');

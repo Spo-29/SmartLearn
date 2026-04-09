@@ -2,11 +2,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Home from './components/pages/Home';
 import Courses from './components/pages/Courses';
 import Detail from './components/pages/Detail';
+import CourseLessonBasicInfo from './components/pages/CourseLessonBasicInfo';
 import Login from './components/pages/Login';
 import Register from './components/pages/Register';
 import MyLearning from './components/pages/account/MyLearning';
 import MyCourses from './components/pages/account/MyCourses';
-import ChangePassword from './components/pages/account/ChangePassword';
 import WatchCourse from './components/pages/account/WatchCourse';
 import Dashboard from './components/pages/account/Dashboard';
 import MyAccount from './components/pages/account/MyAccount';
@@ -51,6 +51,22 @@ function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="/detail/:id"
+              element={
+                <RequireAuth>
+                  <Detail />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/detail/:courseId/lessons/:lessonId"
+              element={
+                <RequireAuth>
+                  <CourseLessonBasicInfo />
+                </RequireAuth>
+              }
+            />
             <Route path="/account/login" element={<Login />} />
             <Route path="/account/register" element={<Register />} />
             <Route
@@ -86,14 +102,6 @@ function App() {
               element={
                 <RequireAuth>
                   <WatchCourse />
-                </RequireAuth>
-              }
-            />
-            <Route
-              path="/account/change-password"
-              element={
-                <RequireAuth>
-                  <ChangePassword />
                 </RequireAuth>
               }
             />

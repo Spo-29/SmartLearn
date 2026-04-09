@@ -214,7 +214,9 @@ const CourseDetails = () => {
                       {outcomes.length ? (
                         <ul className="mb-0">
                           {outcomes.map((item) => (
-                            <li key={item.id} className="mb-1">{item.text}</li>
+                            <li key={item.id} className="mb-1">
+                              {item.text}
+                            </li>
                           ))}
                         </ul>
                       ) : (
@@ -230,7 +232,9 @@ const CourseDetails = () => {
                       {requirements.length ? (
                         <ul className="mb-0">
                           {requirements.map((item) => (
-                            <li key={item.id} className="mb-1">{item.text}</li>
+                            <li key={item.id} className="mb-1">
+                              {item.text}
+                            </li>
                           ))}
                         </ul>
                       ) : (
@@ -253,7 +257,11 @@ const CourseDetails = () => {
                                 {(chapter.lessons || []).length ? (
                                   <ul className="mb-0">
                                     {(chapter.lessons || []).map((lesson) => (
-                                      <li key={lesson.id} className="mb-1">{lesson.title}</li>
+                                      <li key={lesson.id} className="mb-1">
+                                        <Link to={`/account/courses/${id}/lessons/${lesson.id}`} state={{ from: `/account/courses/${id}` }} className="text-decoration-none">
+                                          {lesson.title}
+                                        </Link>
+                                      </li>
                                     ))}
                                   </ul>
                                 ) : (

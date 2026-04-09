@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\OutcomeController;
 use App\Http\Controllers\RequirementController;
@@ -36,6 +37,13 @@ Route::get('/languages', function () {
 Route::get('/levels', function () {
     return response()->json(\App\Models\Level::where('status', 1)->get());
 });
+
+Route::get('/fetch-featured-courses', [HomeController::class, 'fetchFeaturedCourses']);
+Route::get('/fetch-courses', [HomeController::class, 'courses']);
+Route::get('/fetch-course/{id}', [HomeController::class, 'course'])->whereNumber('id');
+Route::get('/fetch-course/{courseId}/lessons/{lessonId}', [HomeController::class, 'courseLesson'])
+    ->whereNumber('courseId')
+    ->whereNumber('lessonId');
 
 Route::get('/courses', function () {
     return response()->json(\App\Models\Course::with(['category', 'level', 'language', 'user'])->where('status', 1)->get());

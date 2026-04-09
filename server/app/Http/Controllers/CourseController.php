@@ -33,8 +33,22 @@ class CourseController extends Controller
             return response()->json(['status' => 400, 'errors' => $validator->errors()], 400);
         }
 
+        $title = trim((string) $request->input('title'));
+
+        $duplicateCourseExists = Course::whereRaw('LOWER(title) = ?', [strtolower($title)])->exists();
+
+        if ($duplicateCourseExists) {
+            return response()->json([
+                'status' => 409,
+                'message' => 'A course of same title exists, so not possible.',
+                'errors' => [
+                    'title' => ['A course of same title exists, so not possible.'],
+                ],
+            ], 409);
+        }
+
         $course= new Course();
-        $course->title = $request->input('title');
+        $course->title = $title;
         $course->category_id = $request->input('category_id');
         $course->level_id = $request->input('level_id');
         $course->language_id = $request->input('language_id');

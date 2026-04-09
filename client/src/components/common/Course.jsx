@@ -1,14 +1,22 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-const Course = ({ title, level, enrolled, customClasses }) => {
+const Course = ({ title, level, enrolled, customClasses, course = null, detailPath = null }) => {
+  const courseTitle = course?.title || title || 'Untitled Course';
+  const courseLevel = course?.level?.name || level || 'N/A';
+  const courseEnrolled = course?.enrollments_count ?? enrolled ?? 0;
+  const coursePrice = course?.price !== null && course?.price !== undefined ? Number(course.price).toFixed(2) : '0.00';
+  const courseImage = course?.course_small_image || `https://placehold.co/600x350?text=${encodeURIComponent(courseTitle)}`;
+  const targetPath = detailPath || (course?.id ? `/detail/${course.id}` : '/detail');
+
   return (
     <div className={customClasses}>
       <div className="card border-0">
         <div className="card-img-top">
-          <img src={`https://placehold.co/600x350?text=${title}`} alt="" className="img-fluid" />
+          <img src={courseImage} alt={courseTitle} className="img-fluid" />
         </div>
         <div className="card-body">
-          <div className="card-title">{title}</div>
+          <div className="card-title">{courseTitle}</div>
           <div className="meta d-flex py-2">
             <div className="level">
               <div className="d-flex align-items-center">
@@ -17,7 +25,7 @@ const Course = ({ title, level, enrolled, customClasses }) => {
                     <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5m1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0M1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5" />
                   </svg>
                 </div>
-                <div className="text ps-2">{level}</div>
+                <div className="text ps-2">{courseLevel}</div>
               </div>
             </div>
             <div className="student ps-4">
@@ -27,7 +35,7 @@ const Course = ({ title, level, enrolled, customClasses }) => {
                     <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4" />
                   </svg>
                 </div>
-                <div className="text ps-2">{enrolled}</div>
+                <div className="text ps-2">{courseEnrolled}</div>
               </div>
             </div>
             <div className="rating ps-4">
@@ -44,11 +52,11 @@ const Course = ({ title, level, enrolled, customClasses }) => {
         </div>
         <div className="card-footer bg-white">
           <div className="d-flex py-2 justify-content-between align-items-center">
-            <div className="price">$50</div>
+            <div className="price">${coursePrice}</div>
             <div className="add-to-cart">
-              <a href="/detail" className="btn btn-primary">
+              <Link to={targetPath} className="btn btn-primary">
                 Read More
-              </a>
+              </Link>
             </div>
           </div>
         </div>

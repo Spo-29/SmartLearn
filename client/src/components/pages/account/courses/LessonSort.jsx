@@ -15,7 +15,6 @@ const LessonSort = ({ show, chapter, loading, onClose, onSave }) => {
     }
 
     const reordered = [...items];
-    const [movedItem] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, movedItem);
     setItems(reordered);
   };

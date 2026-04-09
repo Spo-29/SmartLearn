@@ -1,16 +1,29 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Layout from '../../../common/Layout';
 import UserSidebar from '../../../common/UserSidebar';
 
 const LessonBasicInfo = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { courseId, lessonId } = useParams();
 
   const [loading, setLoading] = useState(true);
   const [lesson, setLesson] = useState(null);
   const [chapterName, setChapterName] = useState('');
+
+  const sourcePath = typeof location.state?.from === 'string' ? location.state.from : `/account/courses/edit/${courseId}`;
+  const sourceLabel = sourcePath.includes('/edit/') ? 'Edit Course' : 'Course Details';
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate(sourcePath);
+  };
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
@@ -47,7 +60,7 @@ const LessonBasicInfo = () => {
 
         if (result.status !== 200) {
           toast.error(result.message || 'Failed to load lesson details.');
-          navigate(`/account/courses/edit/${courseId}`);
+          navigate(sourcePath);
           return;
         }
 
@@ -66,7 +79,7 @@ const LessonBasicInfo = () => {
     };
 
     loadLesson();
-  }, [token, lessonId, courseId, navigate]);
+  }, [token, lessonId, navigate, sourcePath]);
 
   return (
     <Layout>
@@ -78,7 +91,7 @@ const LessonBasicInfo = () => {
                 <Link to="/account/dashboard">Account</Link>
               </li>
               <li className="breadcrumb-item">
-                <Link to={`/account/courses/edit/${courseId}`}>Edit Course</Link>
+                <Link to={sourcePath}>{sourceLabel}</Link>
               </li>
               <li className="breadcrumb-item active" aria-current="page">
                 Lesson Basic Info
@@ -92,9 +105,9 @@ const LessonBasicInfo = () => {
               <button
                 type="button"
                 className="btn btn-outline-secondary btn-sm"
-                onClick={() => navigate(`/account/courses/edit/${courseId}`)}
+                onClick={handleBack}
               >
-                Back to Edit Course
+                Back
               </button>
             </div>
 

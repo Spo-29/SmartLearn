@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react';
 import Layout from '../../common/Layout';
 import { Link } from 'react-router-dom';
 import UserSidebar from '../../common/UserSidebar';
@@ -78,9 +78,7 @@ const Dashboard = () => {
                       <h2>0</h2>
                       <span>Sales</span>
                     </div>
-                    <div className="card-footer">
-                      &nbsp;
-                    </div>
+                    <div className="card-footer">&nbsp;</div>
                   </div>
                 </div>
                 <div className="col-md-4">
@@ -110,6 +108,6 @@ const Dashboard = () => {
       </section>
     </Layout>
   );
-}
+};
 
-export default Dashboard
+export default Dashboard;

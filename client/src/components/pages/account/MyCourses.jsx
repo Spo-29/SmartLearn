@@ -138,9 +138,7 @@ const MyCourses = () => {
               ) : displayedCourses.length === 0 ? (
                 <div className="card border-0 shadow-lg">
                   <div className="card-body p-4">
-                    <p className="mb-0 text-muted">
-                      {activeOnly ? 'No active courses found.' : 'You have not created any course yet.'}
-                    </p>
+                    <p className="mb-0 text-muted">{activeOnly ? 'No active courses found.' : 'You have not created any course yet.'}</p>
                   </div>
                 </div>
               ) : (
@@ -148,60 +146,28 @@ const MyCourses = () => {
                   {displayedCourses.map((course) => (
                     <div className="col-md-6 col-xl-4" key={course.id}>
                       <div className="card border-0 shadow h-100">
-                        <button
-                          type="button"
-                          className="position-relative w-100 p-0 border-0 bg-transparent text-start"
-                          onClick={() => navigate(`/account/courses/${course.id}`)}
-                        >
-                          <img
-                            src={course.course_small_image || 'https://placehold.co/600x350?text=Course'}
-                            alt={course.title}
-                            className="img-fluid w-100"
-                            style={{ height: '190px', objectFit: 'cover' }}
-                          />
-                          <span
-                            className={`badge position-absolute top-0 end-0 m-2 ${Number(course.status) === 1 ? 'bg-success' : 'bg-secondary'}`}
-                          >
-                            {Number(course.status) === 1 ? 'Published' : 'Unpublished'}
-                          </span>
+                        <button type="button" className="position-relative w-100 p-0 border-0 bg-transparent text-start" onClick={() => navigate(`/account/courses/${course.id}`)}>
+                          <img src={course.course_small_image || 'https://placehold.co/600x350?text=Course'} alt={course.title} className="img-fluid w-100" style={{ height: '190px', objectFit: 'cover' }} />
+                          <span className={`badge position-absolute top-0 end-0 m-2 ${Number(course.status) === 1 ? 'bg-success' : 'bg-secondary'}`}>{Number(course.status) === 1 ? 'Published' : 'Unpublished'}</span>
                         </button>
                         <div className="card-body">
-                          <button
-                            type="button"
-                            className="btn btn-link p-0 mb-2 fw-semibold text-start text-decoration-none"
-                            onClick={() => navigate(`/account/courses/${course.id}`)}
-                          >
+                          <button type="button" className="btn btn-link p-0 mb-2 fw-semibold text-start text-decoration-none" onClick={() => navigate(`/account/courses/${course.id}`)}>
                             {course.title}
                           </button>
-                          <p className="small text-muted mb-0">
-                            {course.level?.name || 'Level N/A'}
-                          </p>
+                          <p className="small text-muted mb-0">{course.level?.name || 'Level N/A'}</p>
                         </div>
                         {activeOnly ? (
                           <div className="card-footer bg-white d-flex gap-2">
-                            <button
-                              type="button"
-                              className="btn btn-outline-primary btn-sm"
-                              onClick={() => navigate(`/account/courses/${course.id}`)}
-                            >
+                            <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => navigate(`/account/courses/${course.id}`)}>
                               View Details
                             </button>
                           </div>
                         ) : (
                           <div className="card-footer bg-white d-flex gap-2">
-                            <button
-                              type="button"
-                              className="btn btn-primary btn-sm"
-                              onClick={() => navigate(`/account/courses/edit/${course.id}`)}
-                            >
+                            <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate(`/account/courses/edit/${course.id}`)}>
                               Edit
                             </button>
-                            <button
-                              type="button"
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDeleteCourse(course.id)}
-                              disabled={deletingId === course.id}
-                            >
+                            <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteCourse(course.id)} disabled={deletingId === course.id}>
                               {deletingId === course.id ? 'Deleting...' : 'Delete'}
                             </button>
                           </div>
