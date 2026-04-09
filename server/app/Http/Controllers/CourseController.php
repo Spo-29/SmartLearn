@@ -68,6 +68,8 @@ class CourseController extends Controller
 
     public function metadata()
     {
+        $this->ensureMetadataDefaults();
+
         return response()->json([
             'status' => 200,
             'categories' => Category::where('status', 1)->get(),
@@ -253,6 +255,40 @@ class CourseController extends Controller
 
         if (File::exists($smallPath)) {
             File::delete($smallPath);
+        }
+    }
+
+    private function ensureMetadataDefaults()
+    {
+        $timestamp = now();
+
+        if (Category::count() === 0) {
+            Category::insert([
+                ['name' => 'Web Development', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Mobile Development', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Digital Marketing', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Graphic Design', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Software Design', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Content Writing', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Finance', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Machine Learning', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ]);
+        }
+
+        if (Level::count() === 0) {
+            Level::insert([
+                ['name' => 'Beginner', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Intermediate', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Advanced', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ]);
+        }
+
+        if (Language::count() === 0) {
+            Language::insert([
+                ['name' => 'English', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Bengali', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+                ['name' => 'Hindi', 'status' => 1, 'created_at' => $timestamp, 'updated_at' => $timestamp],
+            ]);
         }
     }
 }

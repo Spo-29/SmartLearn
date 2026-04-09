@@ -98,12 +98,16 @@ function App() {
               element={<Navigate to="/account/my-learning" replace />}
             />
             <Route
-              path="/account/watch-course"
+              path="/account/watch-course/:courseId"
               element={
                 <RequireAuth>
                   <WatchCourse />
                 </RequireAuth>
               }
+            />
+            <Route
+              path="/account/watch-course"
+              element={<Navigate to="/account/my-learning" replace />}
             />
             <Route
               path="/account/dashboard"

@@ -3,9 +3,11 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\OutcomeController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RequirementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -58,12 +60,19 @@ Route::get('/courses/{id}', function ($id) {
     return response()->json($course);
 })->whereNumber('id');
 
+Route::get('/courses/{id}/reviews', [ReviewController::class, 'index'])->whereNumber('id');
+
 // Account routes
 Route::post('/register', [AccountController::class, 'register']);
 Route::post('/authenticate', [AccountController::class, 'authenticate']);
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/account/profile', [AccountController::class, 'profile']);
     Route::put('/account/profile', [AccountController::class, 'updateProfile']);
+    Route::get('/courses/{id}/detail', [EnrollmentController::class, 'detail'])->whereNumber('id');
+    Route::post('/courses/{id}/enroll', [EnrollmentController::class, 'enroll'])->whereNumber('id');
+    Route::post('/courses/{id}/reviews', [ReviewController::class, 'store'])->whereNumber('id');
+    Route::get('/my-enrollments', [EnrollmentController::class, 'myEnrollments']);
+    Route::get('/my-enrollments/{courseId}', [EnrollmentController::class, 'show'])->whereNumber('courseId');
     Route::get('/my-courses', [CourseController::class, 'myCourses']);
     Route::get('/courses/meta', [CourseController::class, 'metadata']);
     Route::get('/courses/{id}/edit', [CourseController::class, 'edit'])->whereNumber('id');
@@ -90,5 +99,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/chapters/{id}', [ChapterController::class, 'destroy'])->whereNumber('id');
     Route::get('/lessons/{id}', [LessonController::class, 'show'])->whereNumber('id');
     Route::put('/lessons/{id}', [LessonController::class, 'update'])->whereNumber('id');
+    Route::post('/lessons/{id}/video', [LessonController::class, 'uploadVideo'])->whereNumber('id');
+    Route::delete('/lessons/{id}/video', [LessonController::class, 'deleteVideo'])->whereNumber('id');
     Route::delete('/lessons/{id}', [LessonController::class, 'destroy'])->whereNumber('id');
 });

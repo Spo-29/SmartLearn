@@ -5,6 +5,9 @@ const Course = ({ title, level, enrolled, customClasses, course = null, detailPa
   const courseTitle = course?.title || title || 'Untitled Course';
   const courseLevel = course?.level?.name || level || 'N/A';
   const courseEnrolled = course?.enrollments_count ?? enrolled ?? 0;
+  const courseRating = course?.average_rating !== null && course?.average_rating !== undefined
+    ? Number(course.average_rating).toFixed(1)
+    : '0.0';
   const coursePrice = course?.price !== null && course?.price !== undefined ? Number(course.price).toFixed(2) : '0.00';
   const courseImage = course?.course_small_image || `https://placehold.co/600x350?text=${encodeURIComponent(courseTitle)}`;
   const targetPath = detailPath || (course?.id ? `/detail/${course.id}` : '/detail');
@@ -45,7 +48,7 @@ const Course = ({ title, level, enrolled, customClasses, course = null, detailPa
                     <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
                   </svg>
                 </div>
-                <div className="text ps-2">5.0</div>
+                <div className="text ps-2">{courseRating}</div>
               </div>
             </div>
           </div>

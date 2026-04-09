@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Lesson;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
 class LessonController extends Controller
@@ -60,7 +61,7 @@ class LessonController extends Controller
             'status' => (int) $request->input('status', 1),
             'duration' => $request->input('duration'),
             'description' => $request->input('description'),
-            'video' => $request->input('video'),
+            'video' => $this->formatVideoValue($request->input('video')),
             'is_free_preview' => $request->input('is_free_preview', 'no'),
             'sort_order' => $nextSortOrder,
         ]);
@@ -165,7 +166,7 @@ class LessonController extends Controller
         $lesson->status = (int) $request->input('status', $lesson->status);
         $lesson->duration = $request->input('duration');
         $lesson->description = $request->input('description');
-        $lesson->video = $request->input('video');
+        $lesson->video = $this->formatVideoValue($request->input('video'));
         $lesson->is_free_preview = $request->input('is_free_preview', $lesson->is_free_preview ?? 'no');
         $lesson->save();
 
@@ -201,6 +202,99 @@ class LessonController extends Controller
         return response()->json([
             'status' => 200,
             'message' => 'Lesson deleted successfully.',
+        ], 200);
+    }
+
+    public function uploadVideo(Request $request, $id)
+    {
+        $lesson = Lesson::with(['chapter.course'])->find($id);
+
+        if (!$lesson) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Lesson not found.',
+            ], 404);
+        }
+
+        $course = $lesson->chapter?->course;
+
+        if (!$course || (int) $course->user_id !== (int) $request->user()->id) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'You are not allowed to upload a video for this lesson.',
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'video_file' => 'required|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm|max:512000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 400,
+                'errors' => $validator->errors(),
+            ], 400);
+        }
+
+        $directory = public_path('upload/lesson/videos');
+        if (!File::exists($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $file = $request->file('video_file');
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'mp4');
+        $fileName = time() . '_' . uniqid() . '_lesson.' . $extension;
+
+        $this->deleteLessonVideoFile($lesson->video);
+
+        $file->move($directory, $fileName);
+
+        $lesson->video = 'upload/lesson/videos/' . $fileName;
+        $lesson->save();
+
+        return response()->json([
+            'status' => 200,
+            'data' => $lesson,
+            'message' => 'Lesson video uploaded successfully.',
+        ], 200);
+    }
+
+    public function deleteVideo(Request $request, $id)
+    {
+        $lesson = Lesson::with(['chapter.course'])->find($id);
+
+        if (!$lesson) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Lesson not found.',
+            ], 404);
+        }
+
+        $course = $lesson->chapter?->course;
+
+        if (!$course || (int) $course->user_id !== (int) $request->user()->id) {
+            return response()->json([
+                'status' => 403,
+                'message' => 'You are not allowed to delete this lesson video.',
+            ], 403);
+        }
+
+        if (!$lesson->video) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'No lesson video found to delete.',
+            ], 400);
+        }
+
+        $this->deleteLessonVideoFile($lesson->video);
+
+        $lesson->video = null;
+        $lesson->save();
+
+        return response()->json([
+            'status' => 200,
+            'data' => $lesson,
+            'message' => 'Lesson video deleted successfully.',
         ], 200);
     }
 
@@ -282,5 +376,39 @@ class LessonController extends Controller
             'message' => 'Order updated successfully.',
             'data' => $lessons,
         ], 200);
+    }
+
+    private function formatVideoValue($video)
+    {
+        if ($video === null) {
+            return null;
+        }
+
+        $value = trim((string) $video);
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function deleteLessonVideoFile($videoPath)
+    {
+        if (!$videoPath) {
+            return;
+        }
+
+        if (preg_match('/^https?:\/\//i', $videoPath)) {
+            return;
+        }
+
+        $relativePath = ltrim((string) $videoPath, '/');
+
+        if (!str_starts_with($relativePath, 'upload/lesson/videos/')) {
+            return;
+        }
+
+        $fullPath = public_path($relativePath);
+
+        if (File::exists($fullPath)) {
+            File::delete($fullPath);
+        }
     }
 }
