@@ -44,6 +44,15 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
     docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
+# Increase PHP limits to allow lesson video uploads.
+RUN { \
+    echo "upload_max_filesize=512M"; \
+    echo "post_max_size=512M"; \
+    echo "max_execution_time=600"; \
+    echo "max_input_time=600"; \
+    echo "memory_limit=512M"; \
+} > /usr/local/etc/php/conf.d/uploads.ini
+
 # By default, Apache serves files from /var/www/html.
 # Laravel expects the document root to point to the public directory of its project structure for proper routing and security.
 # These commands update Apache’s configuration so that it serves files from /var/www/html/public instead, aligning it with Laravel's structure.

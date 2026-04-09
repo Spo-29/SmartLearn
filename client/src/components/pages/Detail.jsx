@@ -1,14 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Accordion, Card, ListGroup } from 'react-bootstrap';
+import toast from 'react-hot-toast';
 import Layout from '../common/Layout';
 import { convertMinutesToHours } from '../../utils/convertMinutesToHours';
 
 const Detail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState(null);
+  const [enrolling, setEnrolling] = useState(false);
+
+  const token = useMemo(() => {
+    const rawUserInfo = localStorage.getItem('userInfoLms');
+    if (!rawUserInfo) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawUserInfo)?.token || null;
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     if (!id) {
@@ -21,32 +37,110 @@ const Detail = () => {
       setLoading(true);
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/fetch-course/${id}`, {
-          headers: {
-            Accept: 'application/json',
-          },
-        });
+        const headers = {
+          Accept: 'application/json',
+        };
+
+        const endpoint = token
+          ? `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}/detail`
+          : `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/fetch-course/${id}`;
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await fetch(endpoint, { headers });
 
         const result = await response.json();
 
         if (result.status === 200) {
-          setCourse(result.data || null);
+          const nextCourse = result.data || null;
+
+          if (nextCourse) {
+            nextCourse.is_owner = Boolean(nextCourse.is_owner);
+            nextCourse.is_enrolled = Boolean(nextCourse.is_enrolled);
+            nextCourse.reviews = Array.isArray(nextCourse.reviews) ? nextCourse.reviews : [];
+            nextCourse.average_rating = Number(nextCourse.average_rating || 0);
+            nextCourse.reviews_count = Number(nextCourse.reviews_count || nextCourse.reviews.length || 0);
+          }
+
+          setCourse(nextCourse);
         } else {
           setCourse(null);
+          toast.error(result.message || 'Failed to load course details.');
         }
       } catch {
         setCourse(null);
+        toast.error('Failed to load course details.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchCourse();
-  }, [id]);
+  }, [id, token]);
+
+  const handleEnroll = async () => {
+    if (!id) {
+      return;
+    }
+
+    if (!token) {
+      toast.error('Please login first.');
+      navigate('/account/login');
+      return;
+    }
+
+    setEnrolling(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}/enroll`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        if (result?.message === 'you have enrolled already') {
+          toast.error('you have enrolled already');
+        } else {
+          toast.success(result.message || 'Enrolled successfully.');
+        }
+
+        if (result.data) {
+          setCourse(result.data);
+        }
+        return;
+      }
+
+      toast.error(result.message || 'Failed to enroll in this course.');
+    } catch {
+      toast.error('Failed to enroll in this course.');
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  const renderStars = (ratingValue) => {
+    const rating = Math.max(0, Math.min(5, Number(ratingValue || 0)));
+    const fullStars = Math.round(rating);
+
+    return Array.from({ length: 5 }).map((_, index) => (
+      <span key={index} className={index < fullStars ? 'text-warning' : 'text-secondary'}>
+        ★
+      </span>
+    ));
+  };
 
   const totalChapters = Number(course?.chapters_count || 0);
   const totalLessons = Number(course?.lessons_count || 0);
   const totalDuration = convertMinutesToHours(Number(course?.lessons_duration_sum || 0));
+  const averageRating = Number(course?.average_rating || 0);
+  const reviews = course?.reviews || [];
 
   return (
     <Layout>
@@ -97,6 +191,12 @@ const Detail = () => {
                   <span className="text-muted d-block">Course Length</span>
                   <span className="fw-bold">{totalDuration}</span>
                 </div>
+              </div>
+
+              <div className="mt-3 d-flex align-items-center gap-2">
+                <span className="fw-semibold">{averageRating.toFixed(1)}</span>
+                <span>{renderStars(averageRating)}</span>
+                <span className="text-muted">({Number(course?.reviews_count || 0)} reviews)</span>
               </div>
 
               <div className="row">
@@ -181,6 +281,31 @@ const Detail = () => {
                     )}
                   </div>
                 </div>
+
+                <div className="col-md-12 mt-4">
+                  <div className="border bg-white rounded-3 p-4">
+                    <h3 className="h4 mb-3">Reviews & Ratings</h3>
+
+                    {reviews.length ? (
+                      <div className="d-flex flex-column gap-3">
+                        {reviews.map((review) => (
+                          <div className="border rounded-3 p-3" key={review.id}>
+                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                              <div className="fw-semibold">{review?.user?.name || 'Anonymous User'}</div>
+                              <div className="d-flex align-items-center gap-2">
+                                <span>{renderStars(review.rating)}</span>
+                                <span className="small text-muted">{Number(review.rating || 0).toFixed(1)}</span>
+                              </div>
+                            </div>
+                            <p className="mb-0 mt-2">{review.comment || 'No comment provided.'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mb-0 text-muted">No reviews yet. Enrolled learners can add the first review from the watch page.</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -192,6 +317,28 @@ const Detail = () => {
                     <div className="text-muted text-decoration-line-through">${Number(course.cross_price).toFixed(2)}</div>
                   ) : null}
                 </Card.Body>
+
+                <div className="d-grid mt-3 gap-2">
+                  {course?.is_owner ? (
+                    <button type="button" className="btn btn-secondary" disabled>
+                      You created this course
+                    </button>
+                  ) : course?.is_enrolled ? (
+                    <>
+                      <button type="button" className="btn btn-secondary" disabled>
+                        Enrolled
+                      </button>
+                      <Link to={`/account/watch-course/${course.id}`} className="btn btn-primary">
+                        Watch Now
+                      </Link>
+                    </>
+                  ) : (
+                    <button type="button" className="btn btn-primary" onClick={handleEnroll} disabled={enrolling}>
+                      {enrolling ? 'Enrolling...' : 'Enroll'}
+                    </button>
+                  )}
+                </div>
+
                 <Card.Footer className="mt-4">
                   <h6 className="fw-bold">This course includes</h6>
                   <ListGroup variant="flush">

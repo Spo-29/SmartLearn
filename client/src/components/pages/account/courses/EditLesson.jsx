@@ -20,6 +20,22 @@ const EditLesson = () => {
     video: '',
   });
   const [errors, setErrors] = useState({});
+  const [videoFile, setVideoFile] = useState(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [deletingVideo, setDeletingVideo] = useState(false);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
+
+  const resolveVideoUrl = (videoValue) => {
+    if (!videoValue) {
+      return '';
+    }
+
+    if (/^https?:\/\//i.test(videoValue)) {
+      return videoValue;
+    }
+
+    return `${import.meta.env.VITE_BACKEND_ENDPOINT}/${String(videoValue).replace(/^\//, '')}`;
+  };
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
@@ -71,6 +87,8 @@ const EditLesson = () => {
           is_free_preview: lesson?.is_free_preview || 'no',
           video: lesson?.video || '',
         });
+        setVideoPreviewUrl(resolveVideoUrl(lesson?.video || ''));
+        setVideoFile(null);
       } catch (error) {
         toast.error('Failed to load lesson details.');
       } finally {
@@ -84,6 +102,93 @@ const EditLesson = () => {
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
+
+    if (field === 'video') {
+      setVideoPreviewUrl(resolveVideoUrl(value));
+    }
+  };
+
+  const uploadLessonVideo = async () => {
+    if (!videoFile) {
+      return { status: 200 };
+    }
+
+    setUploadingVideo(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('video_file', videoFile);
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/lessons/${lessonId}/video`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        const videoValue = result?.data?.video || '';
+        setForm((prev) => ({ ...prev, video: videoValue }));
+        setVideoPreviewUrl(resolveVideoUrl(videoValue));
+        setVideoFile(null);
+        toast.success(result.message || 'Lesson video uploaded successfully.');
+        return result;
+      }
+
+      if (result.errors) {
+        const firstError = Object.values(result.errors)[0]?.[0];
+        toast.error(firstError || result.message || 'Failed to upload lesson video.');
+      } else {
+        toast.error(result.message || 'Failed to upload lesson video.');
+      }
+
+      return result;
+    } catch (error) {
+      toast.error('Failed to upload lesson video.');
+      return { status: 500 };
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    if (!token) {
+      toast.error('Session expired. Please login again.');
+      navigate('/account/login');
+      return;
+    }
+
+    setDeletingVideo(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/lessons/${lessonId}/video`, {
+        method: 'DELETE',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        setForm((prev) => ({ ...prev, video: '' }));
+        setVideoPreviewUrl('');
+        setVideoFile(null);
+        toast.success(result.message || 'Lesson video deleted successfully.');
+        return;
+      }
+
+      toast.error(result.message || 'Failed to delete lesson video.');
+    } catch (error) {
+      toast.error('Failed to delete lesson video.');
+    } finally {
+      setDeletingVideo(false);
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -131,6 +236,13 @@ const EditLesson = () => {
       const result = await response.json();
 
       if (result.status === 200) {
+        const uploadResult = await uploadLessonVideo();
+
+        if (uploadResult.status !== 200) {
+          setSaving(false);
+          return;
+        }
+
         toast.success(result.message || 'Lesson updated successfully.');
         navigate(`/account/courses/edit/${courseId}`);
       } else if (result.errors) {
@@ -257,7 +369,57 @@ const EditLesson = () => {
                           maxLength={255}
                         />
                         {errors.video && <p className="invalid-feedback">{errors.video}</p>}
+                        <small className="text-muted d-block mt-1">
+                          You can provide an external video URL or upload a lesson video file below.
+                        </small>
                       </div>
+
+                      <div className="mb-3">
+                        <label htmlFor="video_file">Upload Lesson Video</label>
+                        <input
+                          id="video_file"
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-msvideo"
+                          className="form-control"
+                          onChange={(event) => setVideoFile(event.target.files?.[0] || null)}
+                        />
+                        <small className="text-muted d-block mt-1">
+                          Supported formats: MP4, MOV, AVI, MKV, WEBM. Max size: 500MB.
+                        </small>
+                        {videoFile && (
+                          <small className="text-muted d-block mt-1">Selected file: {videoFile.name}</small>
+                        )}
+                      </div>
+
+                      {videoPreviewUrl && (
+                        <div className="mb-3">
+                          <label className="form-label">Current Lesson Video</label>
+                          <div className="border rounded p-2 bg-light">
+                            <video controls width="100%" style={{ maxHeight: '320px' }}>
+                              <source src={videoPreviewUrl} />
+                              Your browser does not support the video tag.
+                            </video>
+                            <div className="mt-2">
+                              <a href={videoPreviewUrl} target="_blank" rel="noreferrer" className="small">
+                                Open video in new tab
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {(form.video || videoPreviewUrl) && (
+                        <div className="mb-3">
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={handleDeleteVideo}
+                            disabled={deletingVideo}
+                          >
+                            {deletingVideo ? 'Deleting Video...' : 'Delete Lesson Video'}
+                          </button>
+                        </div>
+                      )}
 
                       <div className="row">
                         <div className="col-md-6 mb-3">
@@ -289,8 +451,8 @@ const EditLesson = () => {
                         </div>
                       </div>
 
-                      <button className="btn btn-primary" disabled={saving}>
-                        {saving ? 'Updating...' : 'Update Lesson'}
+                      <button className="btn btn-primary" disabled={saving || uploadingVideo}>
+                        {saving || uploadingVideo ? 'Updating...' : 'Update Lesson'}
                       </button>
                     </div>
                   </div>

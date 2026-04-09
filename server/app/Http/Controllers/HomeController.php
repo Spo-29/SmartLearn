@@ -11,11 +11,31 @@ class HomeController extends Controller
     public function fetchFeaturedCourses()
     {
         $courses = Course::with('level')
+            ->withCount(['enrollments as enrollments_count'])
+            ->withCount([
+                'reviews as reviews_count' => function ($query) {
+                    $query->where('status', 1);
+                },
+            ])
+            ->withAvg([
+                'reviews as average_rating' => function ($query) {
+                    $query->where('status', 1);
+                },
+            ], 'rating')
             ->where('is_featured', 'yes')
             ->where('status', 1)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
+
+        $courses->each(function ($course) {
+            $course->setAttribute(
+                'average_rating',
+                $course->average_rating !== null ? round((float) $course->average_rating, 1) : 0,
+            );
+            $course->setAttribute('reviews_count', (int) ($course->reviews_count ?? 0));
+            $course->setAttribute('enrollments_count', (int) ($course->enrollments_count ?? 0));
+        });
 
         return response()->json([
             'status' => 200,
@@ -26,6 +46,17 @@ class HomeController extends Controller
     public function courses(Request $request)
     {
         $query = Course::with(['category', 'level', 'language'])
+            ->withCount(['enrollments as enrollments_count'])
+            ->withCount([
+                'reviews as reviews_count' => function ($query) {
+                    $query->where('status', 1);
+                },
+            ])
+            ->withAvg([
+                'reviews as average_rating' => function ($query) {
+                    $query->where('status', 1);
+                },
+            ], 'rating')
             ->where('status', 1);
 
         $keyword = trim((string) $request->query('keyword', ''));
@@ -53,6 +84,15 @@ class HomeController extends Controller
 
         $courses = $query->get();
 
+        $courses->each(function ($course) {
+            $course->setAttribute(
+                'average_rating',
+                $course->average_rating !== null ? round((float) $course->average_rating, 1) : 0,
+            );
+            $course->setAttribute('reviews_count', (int) ($course->reviews_count ?? 0));
+            $course->setAttribute('enrollments_count', (int) ($course->enrollments_count ?? 0));
+        });
+
         return response()->json([
             'status' => 200,
             'data' => $courses,
@@ -77,6 +117,11 @@ class HomeController extends Controller
                 'requirements' => function ($query) {
                     $query->orderBy('sort_order')->orderBy('id');
                 },
+                'reviews' => function ($query) {
+                    $query->where('status', 1)
+                        ->with(['user:id,name'])
+                        ->orderByDesc('created_at');
+                },
             ])
             ->withCount([
                 'chapters as chapters_count' => function ($query) {
@@ -85,12 +130,21 @@ class HomeController extends Controller
                 'lessons as lessons_count' => function ($query) {
                     $query->where('lessons.status', 1);
                 },
+                'enrollments as enrollments_count',
+                'reviews as reviews_count' => function ($query) {
+                    $query->where('status', 1);
+                },
             ])
             ->withSum([
                 'lessons as lessons_duration_sum' => function ($query) {
                     $query->where('lessons.status', 1);
                 },
             ], 'duration')
+            ->withAvg([
+                'reviews as average_rating' => function ($query) {
+                    $query->where('status', 1);
+                },
+            ], 'rating')
             ->where('status', 1)
             ->find($id);
 
@@ -103,7 +157,10 @@ class HomeController extends Controller
 
         return response()->json([
             'status' => 200,
-            'data' => $course,
+            'data' => $course->setAttribute(
+                'average_rating',
+                $course->average_rating !== null ? round((float) $course->average_rating, 1) : 0,
+            ),
         ], 200);
     }
 
