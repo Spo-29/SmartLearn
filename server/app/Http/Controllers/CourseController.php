@@ -10,6 +10,8 @@ use App\Models\Course;
 use App\Models\Category;
 use App\Models\Level;
 use App\Models\Language;
+use App\Models\Enrollment;
+use Illuminate\Support\Facades\DB;
 use Intervention\Image\Facades\Image;
 
 class CourseController extends Controller
@@ -88,6 +90,36 @@ class CourseController extends Controller
         return response()->json([
             'status' => 200,
             'data' => $courses,
+        ], 200);
+    }
+
+    public function dashboardStats(Request $request)
+    {
+        $userId = (int) $request->user()->id;
+
+        $enrollmentsQuery = Enrollment::query()
+            ->join('courses', 'courses.id', '=', 'enrollments.course_id')
+            ->where('courses.user_id', $userId);
+
+        $sales = (float) (clone $enrollmentsQuery)
+            ->sum(DB::raw('COALESCE(courses.price, 0)'));
+
+        $enrolledUsers = (int) (clone $enrollmentsQuery)
+            ->select('enrollments.user_id')
+            ->distinct()
+            ->count('enrollments.user_id');
+
+        $activeCourses = (int) Course::where('user_id', $userId)
+            ->where('status', 1)
+            ->count();
+
+        return response()->json([
+            'status' => 200,
+            'data' => [
+                'sales' => round($sales, 2),
+                'enrolled_users' => $enrolledUsers,
+                'active_courses' => $activeCourses,
+            ],
         ], 200);
     }
 
