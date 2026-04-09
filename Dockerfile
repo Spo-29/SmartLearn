@@ -15,6 +15,8 @@ ARG DB_PORT
 ARG DB_DATABASE
 ARG DB_USERNAME
 ARG DB_PASSWORD
+ARG ADMIN_EMAIL
+ARG ADMIN_PASSWORD
 
 ARG VITE_BACKEND_ENDPOINT
 
@@ -89,7 +91,9 @@ RUN echo "APP_NAME=${APP_NAME}" >> .env && \
     echo "DB_DATABASE=${DB_DATABASE}" >> .env && \
     echo "DB_USERNAME=${DB_USERNAME}" >> .env && \
     echo "DB_PASSWORD=${DB_PASSWORD}" >> .env && \
-    echo "DB_PORT=${DB_PORT}" >> .env
+    echo "DB_PORT=${DB_PORT}" >> .env && \
+    echo "ADMIN_EMAIL=${ADMIN_EMAIL}" >> .env && \
+    echo "ADMIN_PASSWORD=${ADMIN_PASSWORD}" >> .env
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache

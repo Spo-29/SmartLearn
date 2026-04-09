@@ -633,6 +633,20 @@ footer {
     color: rgba(255, 255, 255, 0.88);
   }
 
+  .footer-main-copy {
+    margin-left: auto;
+    margin-right: auto;
+
+    h2,
+    p {
+      text-align: center;
+    }
+
+    p {
+      margin-bottom: 0;
+    }
+  }
+
   ul {
     li {
       padding: 5px 0;
