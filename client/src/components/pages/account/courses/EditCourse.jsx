@@ -18,6 +18,8 @@ const EditCourse = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
+    getValues,
+    setValue,
     reset,
   } = useForm({
     defaultValues: {
@@ -171,6 +173,64 @@ const EditCourse = () => {
       });
   };
 
+  const handlePublishToggle = async () => {
+    if (!courseData?.id) {
+      return;
+    }
+
+    if (!token) {
+      toast.error('Session expired. Please login again.');
+      navigate('/account/login');
+      return;
+    }
+
+    const currentValues = getValues();
+    const nextStatus = Number(courseData.status) === 1 ? 0 : 1;
+
+    const payload = {
+      title: currentValues.title,
+      category_id: currentValues.category_id === '' ? null : Number(currentValues.category_id),
+      level_id: currentValues.level_id === '' ? null : Number(currentValues.level_id),
+      language_id: currentValues.language_id === '' ? null : Number(currentValues.language_id),
+      description: currentValues.description || null,
+      price: currentValues.price === '' ? null : Number(currentValues.price),
+      cross_price: currentValues.cross_price === '' ? null : Number(currentValues.cross_price),
+      status: nextStatus,
+      is_featured: currentValues.is_featured,
+    };
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        setCourseData(result.data);
+        setValue('status', result.data.status);
+        toast.success(result.data.status === 1 ? 'Course published successfully.' : 'Course unpublished successfully.');
+      } else if (result.errors) {
+        Object.keys(result.errors).forEach((field) => {
+          setError(field, {
+            type: 'server',
+            message: result.errors[field][0],
+          });
+        });
+      } else {
+        toast.error(result.message || 'Failed to update course status.');
+      }
+    } catch (error) {
+      toast.error('Something went wrong while updating the course status.');
+    }
+  };
+
   return (
     <Layout>
       <section className="section-4">
@@ -188,8 +248,20 @@ const EditCourse = () => {
 
           <div className="row">
             <div className="col-md-12 mt-5 mb-3">
-              <div className="d-flex justify-content-between">
+              <div className="d-flex justify-content-between align-items-center gap-3">
                 <h2 className="h4 mb-0 pb-0">Edit Course</h2>
+                <div className="d-flex align-items-center gap-2">
+                  <button
+                    type="button"
+                    className={`btn ${Number(courseData?.status) === 1 ? 'btn-success' : 'btn-warning'} text-white`}
+                    onClick={handlePublishToggle}
+                  >
+                    {Number(courseData?.status) === 1 ? 'Unpublish' : 'Publish'}
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={() => navigate('/account/my-courses')}>
+                    Back
+                  </button>
+                </div>
               </div>
             </div>
 

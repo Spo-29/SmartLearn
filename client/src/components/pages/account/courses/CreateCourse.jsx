@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const CreateCourse = () => {
+  const duplicateTitleMessage = 'A course of same title exists, so not possible.';
   const navigate = useNavigate();
   const {
     register,
@@ -75,6 +76,14 @@ const CreateCourse = () => {
             });
             navigate('/account/my-courses');
           }
+        } else if (result.status === 409 || result?.message === duplicateTitleMessage) {
+          setError('title', {
+            type: 'server',
+            message: duplicateTitleMessage,
+          });
+
+          toast.error(duplicateTitleMessage);
+          navigate('/account/my-courses/create', { replace: true });
         } else if (result.errors) {
           Object.keys(result.errors).forEach((field) => {
             setError(field, {
@@ -82,6 +91,11 @@ const CreateCourse = () => {
               message: result.errors[field][0],
             });
           });
+
+          if (result?.errors?.title?.[0] === duplicateTitleMessage) {
+            toast.error(duplicateTitleMessage);
+            navigate('/account/my-courses/create', { replace: true });
+          }
         } else {
           toast.error(result.message || 'Failed to create course.');
         }
