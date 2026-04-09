@@ -3,7 +3,11 @@ import Layout from '../../common/Layout';
 import { Link } from 'react-router-dom';
 import UserSidebar from '../../common/UserSidebar';
 const Dashboard = () => {
-  const [activeCourses, setActiveCourses] = useState(0);
+  const [stats, setStats] = useState({
+    sales: 0,
+    enrolledUsers: 0,
+    activeCourses: 0,
+  });
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
@@ -24,9 +28,9 @@ const Dashboard = () => {
       return;
     }
 
-    const loadCourseStats = async () => {
+    const loadDashboardStats = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/my-courses`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/dashboard/stats`, {
           headers: {
             Accept: 'application/json',
             Authorization: `Bearer ${token}`,
@@ -35,16 +39,22 @@ const Dashboard = () => {
 
         const result = await response.json();
 
-        if (result.status === 200) {
-          const courses = result.data || [];
-          setActiveCourses(courses.filter((course) => Number(course.status) === 1).length);
+        if (result.status !== 200) {
+          setStats({ sales: 0, enrolledUsers: 0, activeCourses: 0 });
+          return;
         }
+
+        setStats({
+          sales: Number(result?.data?.sales || 0),
+          enrolledUsers: Number(result?.data?.enrolled_users || 0),
+          activeCourses: Number(result?.data?.active_courses || 0),
+        });
       } catch {
-        setActiveCourses(0);
+        setStats({ sales: 0, enrolledUsers: 0, activeCourses: 0 });
       }
     };
 
-    loadCourseStats();
+    loadDashboardStats();
   }, [token]);
 
   return (
@@ -75,7 +85,7 @@ const Dashboard = () => {
                 <div className="col-md-4">
                   <div className="card shadow ">
                     <div className="card-body p-3">
-                      <h2>0</h2>
+                      <h2>${stats.sales.toFixed(2)}</h2>
                       <span>Sales</span>
                     </div>
                     <div className="card-footer">&nbsp;</div>
@@ -84,7 +94,7 @@ const Dashboard = () => {
                 <div className="col-md-4">
                   <div className="card shadow ">
                     <div className="card-body p-3">
-                      <h2>0</h2>
+                      <h2>{stats.enrolledUsers}</h2>
                       <span>Enrolled Users</span>
                     </div>
                     <div className="card-footer">&nbsp;</div>
@@ -93,7 +103,7 @@ const Dashboard = () => {
                 <div className="col-md-4">
                   <div className="card shadow ">
                     <div className="card-body p-3">
-                      <h2>{activeCourses}</h2>
+                      <h2>{stats.activeCourses}</h2>
                       <span>Active Courses</span>
                     </div>
                     <div className="card-footer">

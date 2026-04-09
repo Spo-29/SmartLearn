@@ -73,6 +73,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/courses/{id}/reviews', [ReviewController::class, 'store'])->whereNumber('id');
     Route::get('/my-enrollments', [EnrollmentController::class, 'myEnrollments']);
     Route::get('/my-enrollments/{courseId}', [EnrollmentController::class, 'show'])->whereNumber('courseId');
+    Route::get('/dashboard/stats', [CourseController::class, 'dashboardStats']);
     Route::get('/my-courses', [CourseController::class, 'myCourses']);
     Route::get('/courses/meta', [CourseController::class, 'metadata']);
     Route::get('/courses/{id}/edit', [CourseController::class, 'edit'])->whereNumber('id');
