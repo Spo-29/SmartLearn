@@ -34,11 +34,13 @@ const UserSidebar = () => {
               <BsMortarboardFill size={16} className="me-2" /> My Enrollments
             </Link>
           </li>
+
           <li className="d-flex align-items-center">
             <Link to="/account/my-courses">
               <FaDesktop size={16} className="me-2" /> My Courses
             </Link>
           </li>
+
           <li>
             <a onClick={handleLogout} className="text-danger" style={{cursor: 'pointer'}}>
               <MdLogout size={16} className="me-2" /> Logout

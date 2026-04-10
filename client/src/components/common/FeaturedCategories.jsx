@@ -15,7 +15,6 @@ const FeaturedCategories = () => {
             Accept: 'application/json',
           },
         });
-
         const result = await response.json();
 
         if (Array.isArray(result)) {
@@ -25,6 +24,7 @@ const FeaturedCategories = () => {
         } else {
           setCategories([]);
         }
+        
       } catch {
         setCategories([]);
       } finally {

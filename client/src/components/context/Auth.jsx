@@ -1,14 +1,13 @@
 import { createContext, useState } from "react";
-
 export const AuthContext = createContext();
 
 export const AuthProvider = ({children}) => {
+    
     const userInfo = localStorage.getItem('userInfoLms');
     const [user, setUser] = useState(() => {
         if (!userInfo) {
             return null;
         }
-
         try {
             return JSON.parse(userInfo);
         } catch {
