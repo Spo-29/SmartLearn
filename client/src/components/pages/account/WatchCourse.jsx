@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 const WatchCourse = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState(null);
   const [selectedLessonId, setSelectedLessonId] = useState(null);
@@ -52,7 +51,6 @@ const WatchCourse = () => {
     if (!video) {
       return null;
     }
-
     if (/^https?:\/\//i.test(video)) {
       return video;
     }

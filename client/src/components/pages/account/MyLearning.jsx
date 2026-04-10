@@ -5,7 +5,7 @@ import CourseEnrolled from '../../common/CourseEnrolled';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 
-const MyLearning = () => {
+ const MyLearning = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +24,7 @@ const MyLearning = () => {
   }, []);
 
   useEffect(() => {
+
     if (!token) {
       toast.error('Please login first.');
       navigate('/account/login');
@@ -82,6 +83,7 @@ const MyLearning = () => {
             <div className="col-lg-3 account-sidebar">
               <UserSidebar />
             </div>
+
             <div className="col-lg-9">
               {loading ? (
                 <div className="card border-0 shadow-lg">
