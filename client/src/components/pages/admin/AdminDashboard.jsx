@@ -21,7 +21,6 @@ const AdminDashboard = () => {
     if (!raw) {
       return null;
     }
-
     try {
       return JSON.parse(raw);
     } catch {
@@ -42,7 +41,6 @@ const AdminDashboard = () => {
       navigate('/account/login');
       return;
     }
-
     setLoading(true);
 
     try {
@@ -71,6 +69,7 @@ const AdminDashboard = () => {
         totalEnrollments: Number(result?.data?.summary?.total_enrollments || 0),
         totalSales: Number(result?.data?.summary?.total_sales || 0),
       });
+      
       setCourses(result?.data?.course_sales || []);
     } catch {
       toast.error('Failed to load admin dashboard.');

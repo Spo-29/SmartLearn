@@ -10,7 +10,6 @@ const MyCourses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
-
   const activeOnly = searchParams.get('active') === '1';
 
   const token = useMemo(() => {
@@ -57,6 +56,7 @@ const MyCourses = () => {
   }, [token]);
 
   useEffect(() => {
+
     fetchCourses();
   }, [fetchCourses]);
 

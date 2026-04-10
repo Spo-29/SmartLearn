@@ -9,7 +9,6 @@ const Dashboard = () => {
     if (!rawUserInfo) {
       return null;
     }
-
     try {
       return JSON.parse(rawUserInfo);
     } catch {
@@ -56,7 +55,7 @@ const Dashboard = () => {
         setStats({ sales: 0, enrolledUsers: 0, activeCourses: 0 });
       }
     };
-
+    
     loadDashboardStats();
   }, [token]);
 
