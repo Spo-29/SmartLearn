@@ -14,20 +14,19 @@ const MyCourses = () => {
 
   const token = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');
-
-    if (!rawUserInfo) {
-      return null;
-    }
+    if (!rawUserInfo) return null;
 
     try {
       return JSON.parse(rawUserInfo)?.token || null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }, []);
 
   const fetchCourses = useCallback(async () => {
     if (!token) {
+      toast.error('Please login first.');
+      navigate('/account/login');
       return;
     }
 
@@ -42,21 +41,36 @@ const MyCourses = () => {
       });
 
       const result = await response.json();
+      console.log('my-courses response =>', result);
 
-      if (result.status === 200) {
-        setCourses(result.data || []);
-      } else {
+      if (!response.ok) {
         toast.error(result.message || 'Failed to load courses.');
+        setCourses([]);
+        return;
       }
-    } catch {
+
+      const courseList =
+        result?.data?.data ||
+        result?.data?.courses ||
+        result?.data ||
+        result?.courses?.data ||
+        result?.courses ||
+        result?.myCourses?.data ||
+        result?.myCourses ||
+        result?.course ||
+        [];
+
+      setCourses(Array.isArray(courseList) ? courseList : []);
+    } catch (error) {
+      console.error('my-courses error =>', error);
       toast.error('Failed to load courses.');
+      setCourses([]);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [navigate, token]);
 
   useEffect(() => {
-
     fetchCourses();
   }, [fetchCourses]);
 
@@ -74,13 +88,13 @@ const MyCourses = () => {
 
       const result = await response.json();
 
-      if (result.status === 200) {
+      if (response.ok) {
         setCourses((prev) => prev.filter((course) => course.id !== courseId));
         toast.success(result.message || 'Course deleted successfully.');
       } else {
         toast.error(result.message || 'Failed to delete course.');
       }
-    } catch {
+    } catch (error) {
       toast.error('Failed to delete course.');
     } finally {
       setDeletingId(null);
@@ -88,10 +102,7 @@ const MyCourses = () => {
   };
 
   const displayedCourses = useMemo(() => {
-    if (!activeOnly) {
-      return courses;
-    }
-
+    if (!activeOnly) return courses;
     return courses.filter((course) => Number(course.status) === 1);
   }, [activeOnly, courses]);
 
@@ -125,9 +136,11 @@ const MyCourses = () => {
                 )}
               </div>
             </div>
+
             <div className="col-lg-3 account-sidebar">
               <UserSidebar />
             </div>
+
             <div className="col-lg-9">
               {loading ? (
                 <div className="card border-0 shadow-lg">
@@ -138,7 +151,9 @@ const MyCourses = () => {
               ) : displayedCourses.length === 0 ? (
                 <div className="card border-0 shadow-lg">
                   <div className="card-body p-4">
-                    <p className="mb-0 text-muted">{activeOnly ? 'No active courses found.' : 'You have not created any course yet.'}</p>
+                    <p className="mb-0 text-muted">
+                      {activeOnly ? 'No active courses found.' : 'You have not created any course yet.'}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -146,28 +161,62 @@ const MyCourses = () => {
                   {displayedCourses.map((course) => (
                     <div className="col-md-6 col-xl-4" key={course.id}>
                       <div className="card border-0 shadow h-100">
-                        <button type="button" className="position-relative w-100 p-0 border-0 bg-transparent text-start" onClick={() => navigate(`/account/courses/${course.id}`)}>
-                          <img src={course.course_small_image || 'https://placehold.co/600x350?text=Course'} alt={course.title} className="img-fluid w-100" style={{ height: '190px', objectFit: 'cover' }} />
-                          <span className={`badge position-absolute top-0 end-0 m-2 ${Number(course.status) === 1 ? 'bg-success' : 'bg-secondary'}`}>{Number(course.status) === 1 ? 'Published' : 'Unpublished'}</span>
+                        <button
+                          type="button"
+                          className="position-relative w-100 p-0 border-0 bg-transparent text-start"
+                          onClick={() => navigate(`/account/courses/${course.id}`)}
+                        >
+                          <img
+                            src={course.course_small_image || 'https://placehold.co/600x350?text=Course'}
+                            alt={course.title}
+                            className="img-fluid w-100"
+                            style={{ height: '190px', objectFit: 'cover' }}
+                          />
+                          <span
+                            className={`badge position-absolute top-0 end-0 m-2 ${
+                              Number(course.status) === 1 ? 'bg-success' : 'bg-secondary'
+                            }`}
+                          >
+                            {Number(course.status) === 1 ? 'Published' : 'Unpublished'}
+                          </span>
                         </button>
+
                         <div className="card-body">
-                          <button type="button" className="btn btn-link p-0 mb-2 fw-semibold text-start text-decoration-none" onClick={() => navigate(`/account/courses/${course.id}`)}>
+                          <button
+                            type="button"
+                            className="btn btn-link p-0 mb-2 fw-semibold text-start text-decoration-none"
+                            onClick={() => navigate(`/account/courses/${course.id}`)}
+                          >
                             {course.title}
                           </button>
                           <p className="small text-muted mb-0">{course.level?.name || 'Level N/A'}</p>
                         </div>
+
                         {activeOnly ? (
                           <div className="card-footer bg-white d-flex gap-2">
-                            <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => navigate(`/account/courses/${course.id}`)}>
+                            <button
+                              type="button"
+                              className="btn btn-outline-primary btn-sm"
+                              onClick={() => navigate(`/account/courses/${course.id}`)}
+                            >
                               View Details
                             </button>
                           </div>
                         ) : (
                           <div className="card-footer bg-white d-flex gap-2">
-                            <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate(`/account/courses/edit/${course.id}`)}>
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              onClick={() => navigate(`/account/courses/edit/${course.id}`)}
+                            >
                               Edit
                             </button>
-                            <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeleteCourse(course.id)} disabled={deletingId === course.id}>
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDeleteCourse(course.id)}
+                              disabled={deletingId === course.id}
+                            >
                               {deletingId === course.id ? 'Deleting...' : 'Delete'}
                             </button>
                           </div>
