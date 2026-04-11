@@ -4,6 +4,8 @@ import { Accordion } from 'react-bootstrap';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import UserSidebar from '../../../common/UserSidebar';
 import toast from 'react-hot-toast';
+import ReviewCommentForm from '../../../common/ReviewCommentForm';
+import ReviewCommentList from '../../../common/ReviewCommentList';
 
 const CourseDetails = () => {
   const { id } = useParams();
@@ -274,6 +276,13 @@ const CourseDetails = () => {
                       ) : (
                         <p className="mb-0 text-muted">No chapters added yet.</p>
                       )}
+                    </div>
+                  </div>
+
+                  <div className="card border-0 shadow-lg mt-3">
+                    <div className="card-body p-4">
+                      <ReviewCommentForm courseId={course?.id} />
+                      <ReviewCommentList courseId={course?.id} />
                     </div>
                   </div>
                 </>

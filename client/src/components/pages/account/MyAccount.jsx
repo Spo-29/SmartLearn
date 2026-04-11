@@ -26,7 +26,6 @@ const MyAccount = () => {
     if (!rawUserInfo) {
       return null;
     }
-
     try {
       return JSON.parse(rawUserInfo)?.token || null;
     } catch {
@@ -48,8 +47,7 @@ const MyAccount = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-
-        const result = await response.json();
+          const result = await response.json();
 
         if (result.status === 200) {
           reset({
@@ -94,6 +92,7 @@ const MyAccount = () => {
           }
         }
 
+        
         toast.success(result.message || 'Profile updated successfully.');
       } else if (result.errors) {
         Object.keys(result.errors).forEach((field) => {

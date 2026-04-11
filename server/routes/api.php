@@ -14,7 +14,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RequirementController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\ReviewController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::post('/reviews', [ReviewController::class, 'store']);
+Route::get('/courses/{courseId}/reviews', [ReviewController::class, 'courseReviews']);
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();

@@ -59,11 +59,13 @@ const CourseLessonBasicInfo = () => {
         setLesson(result.data?.lesson || null);
         setChapter(result.data?.chapter || null);
         setCourse(result.data?.course || null);
+      
       } catch {
         setError('Failed to load lesson details.');
         setLesson(null);
         setChapter(null);
         setCourse(null);
+      
       } finally {
         setLoading(false);
       }
@@ -156,6 +158,7 @@ const CourseLessonBasicInfo = () => {
                     value={lesson?.is_free_preview === 'yes' ? 'Yes' : 'No'}
                     readOnly
                   />
+
                 </div>
               </div>
             </div>

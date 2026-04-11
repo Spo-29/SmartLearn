@@ -38,7 +38,6 @@ const buildSearchParams = ({ keyword, categories, levels, languages, sort }) => 
   if (languages.length) {
     params.set('language', languages.join(','));
   }
-
   params.set('sort', sort);
 
   return params;
@@ -47,7 +46,6 @@ const buildSearchParams = ({ keyword, categories, levels, languages, sort }) => 
 const Courses = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [keyword, setKeyword] = useState(() => searchParams.get('keyword') || '');
   const [categoryChecked, setCategoryChecked] = useState(() => parseSingleCsvParam(searchParams.get('category')));
   const [levelChecked, setLevelChecked] = useState(() => parseSingleCsvParam(searchParams.get('level')));
@@ -81,6 +79,7 @@ const Courses = () => {
   const languageKey = languageChecked.join(',');
 
   useEffect(() => {
+    
     const nextKeyword = searchParams.get('keyword') || '';
     const nextCategoryChecked = parseSingleCsvParam(searchParams.get('category'));
     const nextLevelChecked = parseSingleCsvParam(searchParams.get('level'));

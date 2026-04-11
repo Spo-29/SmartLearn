@@ -24,6 +24,7 @@ const Login = () => {
       },
       body: JSON.stringify(data),
     })
+
       .then((res) => res.json())
       .then((result) => {
         if (result.status === 200) {
@@ -38,6 +39,7 @@ const Login = () => {
           login(userInfo);
           toast.success('Login successful!');
           navigate('/home');
+
         } else if (result.errors) {
           Object.keys(result.errors).forEach((field) => {
             setError(field, {
@@ -75,6 +77,7 @@ const Login = () => {
                     className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                     placeholder="Email"
                   />
+                  
                   {errors.email && <div className="text-danger">{errors.email.message}</div>}
                 </div>
 

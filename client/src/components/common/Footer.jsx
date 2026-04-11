@@ -10,6 +10,7 @@ const Footer = () => {
             <p>Join our Learning Management System and explore a wide range of courses to enhance your skills and achieve your goals.</p>
           </div>
         </div>
+
         <div className="row copyright">
           <div className="col-md-12 text-center py-4">&copy; 2025 All Rights Reserved</div>
         </div>

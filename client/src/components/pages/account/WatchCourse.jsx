@@ -61,7 +61,6 @@ const WatchCourse = () => {
     if (!video) {
       return null;
     }
-
     if (/^https?:\/\//i.test(video)) {
       return video;
     }

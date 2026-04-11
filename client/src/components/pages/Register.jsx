@@ -22,6 +22,7 @@ const Register = () => {
       },
       body: JSON.stringify(data),
     })
+
       .then((res) => res.json())
       .then((data) => {
         if (data.status === 200) {
@@ -34,6 +35,7 @@ const Register = () => {
               message: data.errors[field][0],
             });
           });
+
         } else {
           toast.error('Registration failed. Please try again.');
         }
@@ -68,6 +70,7 @@ const Register = () => {
                   <label className="form-label" htmlFor="email">
                     Email
                   </label>
+                  
                   <input
                     {...register('email', {
                       required: 'Email is required',
