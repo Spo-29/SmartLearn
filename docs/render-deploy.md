@@ -18,6 +18,7 @@ In this repo, deployment is now app-only on Render, with database hosted externa
 - `render.yaml` DB variables are external (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`)
 - `scripts/render-db-init.sh` now supports external DB names and optional TLS settings
 - DB bootstrap runs during container startup (`RUN_DB_BOOTSTRAP=true`) because Render Free does not support `preDeployCommand`
+- Startup scripts are normalized to Unix line endings at image build time to avoid `bash\r` failures
 - `.github/workflows/ci-e2e.yml` still uses Docker Compose for CI with a temporary MySQL container (independent from production)
 
 ## 3. Aiven setup (recommended)
@@ -85,6 +86,10 @@ Required external DB values from Aiven:
 - `DB_PASSWORD=<aiven-password>`
 - `MYSQL_SSL_MODE=REQUIRED`
 
+Recommended TLS options with Aiven:
+
+- `MYSQL_SSL_CA_CERT=<paste full PEM certificate>`
+
 If you use Aiven defaults, this is often:
 
 - `DB_DATABASE=defaultdb`
@@ -92,7 +97,7 @@ If you use Aiven defaults, this is often:
 
 Optional values:
 
-- `MYSQL_ATTR_SSL_CA` (path in container if you bundle a CA file)
+- `MYSQL_SSL_CA_CERT` (full PEM certificate content; startup writes it to a file automatically)
 - `GEMINI_API_KEY`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
@@ -141,10 +146,13 @@ On Render Free, `preDeployCommand` is not supported. This repo now bootstraps th
 
 The startup flow now:
 
+- starts Apache immediately so Render can detect the listening port
 - waits for external MySQL readiness
 - applies schema SQL files
 - seeds base data only when categories are empty
-- supports optional TLS flags (`MYSQL_SSL_MODE`, `MYSQL_ATTR_SSL_CA`, `MYSQL_SSL_CERT`, `MYSQL_SSL_KEY`)
+- supports TLS via `MYSQL_SSL_MODE` and `MYSQL_SSL_CA_CERT`
+
+For local development and CI Docker Compose, `RUN_DB_BOOTSTRAP=false` is set so startup does not block on bootstrap.
 
 If you need to skip bootstrap after initial setup, set:
 
@@ -169,7 +177,7 @@ If you need to skip bootstrap after initial setup, set:
 ### TLS/SSL DB connection errors
 
 - Keep `MYSQL_SSL_MODE=REQUIRED`.
-- If your provider enforces CA validation, add a CA file in image and set `MYSQL_ATTR_SSL_CA`.
+- Paste the provider CA into `MYSQL_SSL_CA_CERT`.
 
 ### API works locally but fails on Render
 

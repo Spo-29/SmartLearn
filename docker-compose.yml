@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      RUN_DB_BOOTSTRAP: 'false'
     ports:
       - '9000:80'
     volumes:

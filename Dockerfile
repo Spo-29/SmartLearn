@@ -65,7 +65,8 @@ RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoload
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-RUN chmod +x /var/www/html/scripts/render-db-init.sh /usr/local/bin/docker-start.sh
+RUN sed -i 's/\r$//' /var/www/html/scripts/render-db-init.sh /usr/local/bin/docker-start.sh && \
+    chmod +x /var/www/html/scripts/render-db-init.sh /usr/local/bin/docker-start.sh
 
 # RUN ls -a
 # RUN echo "hello wrld"

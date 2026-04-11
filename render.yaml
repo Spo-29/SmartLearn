@@ -39,7 +39,7 @@ services:
         sync: false
       - key: MYSQL_SSL_MODE
         value: REQUIRED
-      - key: MYSQL_ATTR_SSL_CA
+      - key: MYSQL_SSL_CA_CERT
         sync: false
       - key: GEMINI_API_KEY
         sync: false
