@@ -21,6 +21,8 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      - key: SESSION_SECURE_COOKIE
+        value: 'true'
       - key: LOG_LEVEL
         value: error
       - key: DB_CONNECTION

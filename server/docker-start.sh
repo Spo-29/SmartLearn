@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Clearing Laravel caches..."
+php artisan config:clear || true
+php artisan route:clear || true
+php artisan cache:clear || true
+php artisan view:clear || true
+
 if [[ -n "${MYSQL_SSL_CA_CERT:-}" && -z "${MYSQL_ATTR_SSL_CA:-}" ]]; then
   ca_path="/tmp/mysql-ca.pem"
   # Support both true multiline PEM and escaped \n format from environment variables.

@@ -11,6 +11,11 @@ done
 
 MYSQL_SSL_MODE="${MYSQL_SSL_MODE:-PREFERRED}"
 
+if [[ -n "${MYSQL_ATTR_SSL_CA:-}" && ! -r "${MYSQL_ATTR_SSL_CA}" ]]; then
+  echo "MYSQL_ATTR_SSL_CA path is not readable (${MYSQL_ATTR_SSL_CA}); ignoring CA path for mysql CLI bootstrap."
+  unset MYSQL_ATTR_SSL_CA
+fi
+
 mysql_tls_args=(--ssl-mode="${MYSQL_SSL_MODE}")
 if [[ -n "${MYSQL_ATTR_SSL_CA:-}" ]]; then
   mysql_tls_args+=(--ssl-ca "${MYSQL_ATTR_SSL_CA}")
