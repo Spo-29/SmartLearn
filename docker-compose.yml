@@ -23,6 +23,7 @@ services:
     ports:
       - '8000:80'
     volumes:
+      - ./server:/var/www/html
       - ./server/public/upload:/var/www/html/public/upload
     depends_on:
       db:
