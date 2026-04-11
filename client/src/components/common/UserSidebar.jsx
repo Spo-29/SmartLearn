@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext } from 'react';
 import { FaChartBar, FaDesktop, FaUserLock } from 'react-icons/fa';
 import { BsMortarboardFill } from 'react-icons/bs';
 import { MdLogout } from 'react-icons/md';
@@ -40,7 +40,7 @@ const UserSidebar = () => {
             </Link>
           </li>
           <li>
-            <a onClick={handleLogout} className="text-danger" style={{cursor: 'pointer'}}>
+            <a onClick={handleLogout} className="text-danger" style={{ cursor: 'pointer' }}>
               <MdLogout size={16} className="me-2" /> Logout
             </a>
           </li>
@@ -48,6 +48,6 @@ const UserSidebar = () => {
       </div>
     </div>
   );
-}
+};
 
-export default UserSidebar
+export default UserSidebar;

@@ -276,26 +276,14 @@ const AdminDashboard = () => {
                               <td>{Number(course.reviews_count || 0)}</td>
                               <td>{Number(course.average_rating || 0).toFixed(1)}</td>
                               <td>
-                                <span className={`badge ${Number(course.status) === 1 ? 'bg-success' : 'bg-secondary'}`}>
-                                  {Number(course.status) === 1 ? 'Published' : 'Unpublished'}
-                                </span>
+                                <span className={`badge ${Number(course.status) === 1 ? 'bg-success' : 'bg-secondary'}`}>{Number(course.status) === 1 ? 'Published' : 'Unpublished'}</span>
                               </td>
                               <td>
                                 <div className="d-flex gap-2 flex-wrap">
-                                  <button
-                                    type="button"
-                                    className={`btn btn-sm ${Number(course.status) === 1 ? 'btn-warning' : 'btn-success'}`}
-                                    onClick={() => handleToggleStatus(course)}
-                                    disabled={actionCourseId === course.id}
-                                  >
+                                  <button type="button" className={`btn btn-sm ${Number(course.status) === 1 ? 'btn-warning' : 'btn-success'}`} onClick={() => handleToggleStatus(course)} disabled={actionCourseId === course.id}>
                                     {Number(course.status) === 1 ? 'Unpublish' : 'Publish'}
                                   </button>
-                                  <button
-                                    type="button"
-                                    className="btn btn-sm btn-danger"
-                                    onClick={() => handleDeleteCourse(course)}
-                                    disabled={actionCourseId === course.id}
-                                  >
+                                  <button type="button" className="btn btn-sm btn-danger" onClick={() => handleDeleteCourse(course)} disabled={actionCourseId === course.id}>
                                     Delete
                                   </button>
                                 </div>
