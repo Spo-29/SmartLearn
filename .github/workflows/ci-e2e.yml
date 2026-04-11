@@ -22,7 +22,7 @@ jobs:
           APP_KEY_VALUE="base64:$(openssl rand -base64 32)"
           sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY_VALUE}|" server/.env
 
-      - name: Build and start full stack
+      - name: Build and start CI stack (temporary MySQL via Docker Compose)
         run: docker compose up -d --build
 
       - name: Run smoke e2e checks

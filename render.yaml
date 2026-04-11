@@ -1,32 +1,10 @@
 services:
-  - type: pserv
-    name: smartlearn-mysql
-    runtime: image
-    image:
-      url: mysql:8.0
-    plan: starter
-    region: oregon
-    autoDeployTrigger: off
-    envVars:
-      - key: MYSQL_DATABASE
-        value: smartlearn
-      - key: MYSQL_USER
-        value: smartlearn
-      - key: MYSQL_PASSWORD
-        sync: false
-      - key: MYSQL_ROOT_PASSWORD
-        sync: false
-    disk:
-      name: mysql-data
-      mountPath: /var/lib/mysql
-      sizeGB: 10
-
   - type: web
     name: smartlearn-app
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    plan: starter
+    plan: free
     region: oregon
     autoDeployTrigger: off
     healthCheckPath: /api/health
@@ -49,30 +27,19 @@ services:
       - key: DB_CONNECTION
         value: mysql
       - key: DB_HOST
-        fromService:
-          type: pserv
-          name: smartlearn-mysql
-          property: host
+        sync: false
       - key: DB_PORT
-        fromService:
-          type: pserv
-          name: smartlearn-mysql
-          property: port
+        sync: false
       - key: DB_DATABASE
-        fromService:
-          type: pserv
-          name: smartlearn-mysql
-          envVarKey: MYSQL_DATABASE
+        sync: false
       - key: DB_USERNAME
-        fromService:
-          type: pserv
-          name: smartlearn-mysql
-          envVarKey: MYSQL_USER
+        sync: false
       - key: DB_PASSWORD
-        fromService:
-          type: pserv
-          name: smartlearn-mysql
-          envVarKey: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
+      - key: MYSQL_ATTR_SSL_CA
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: ADMIN_EMAIL

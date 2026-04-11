@@ -1,66 +1,99 @@
-# SmartLearn Render + GitHub Actions Setup Guide
+# SmartLearn Free Deployment Guide (Render + Aiven + GitHub Actions)
 
-This project deploys as:
+This guide uses a decoupled architecture to avoid paid Render database services:
 
-- One Docker web service: Laravel API + built React SPA
-- One MySQL private service on Render with persistent disk
+- Render Free Web Service for the Docker app (Laravel API + built React SPA)
+- External MySQL provider (Aiven recommended)
+- GitHub Actions for CI + deploy hook trigger
 
-## 1. Key answer: where to put env values?
+## 1. Why Render asked for a credit card
 
-### For GitHub Actions CI
+Render free tier covers stateless web compute. Render-managed MySQL requires a private service and persistent disk, which is paid. If your `render.yaml` contains a MySQL private service, billing is required.
 
-You do not need to upload your full `.env` file to GitHub for CI in this repo.
+In this repo, deployment is now app-only on Render, with database hosted externally.
 
-Reason:
+## 2. What changed in this repo
 
-- The CI workflow creates `server/.env` from `server/.env.example` at runtime.
-- CI generates `APP_KEY` on the fly.
-- CI smoke tests do not call Gemini endpoints.
+- `render.yaml` now defines only `smartlearn-app` (no Render MySQL service, no Render disk)
+- `render.yaml` DB variables are external (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`)
+- `scripts/render-db-init.sh` now supports external DB names and optional TLS settings
+- `.github/workflows/ci-e2e.yml` still uses Docker Compose for CI with a temporary MySQL container (independent from production)
 
-So for CI, no app secrets are required.
+## 3. Aiven setup (recommended)
 
-### For Render deployment
+1. Create an Aiven account and create a MySQL service on the free plan (if available in your account/region).
+2. Create a database for SmartLearn (example: `smartlearn`).
+3. Create a DB user with read/write permissions on that database.
+4. Copy these connection values from Aiven:
+   - Host
+   - Port
+   - Database name
+   - Username
+   - Password
+5. Keep TLS enabled. For this repo, use `MYSQL_SSL_MODE=REQUIRED` on Render.
 
-Yes, set app and secret environment values in Render Dashboard (or Blueprint prompts). Render is the runtime, so production config belongs there.
+### Aiven connection test from terminal
 
-### For GitHub deployment trigger
+After installing MySQL client, test with:
 
-GitHub needs only one secret for deployment automation:
+```bash
+mysql --user <username> --password=<password> --host <host> --port <port> <database>
+```
 
-- `RENDER_DEPLOY_HOOK_URL`
+Example format from Aiven instructions:
 
-## 2. Files added for deployment and CI
+```bash
+mysql --user avnadmin --password=<password> --host mysql-xxxxx.aivencloud.com --port 14259 defaultdb
+```
 
-- `render.yaml`
-- `.github/workflows/ci-e2e.yml`
-- `.github/workflows/deploy-render.yml`
-- `scripts/render-db-init.sh`
-- `scripts/e2e-smoke.sh`
-- `server/routes/api.php` includes `GET /api/health`
+Then run:
 
-## 3. Render setup (first-time)
+```sql
+select 1 + 2 as three;
+```
 
-1. Push your branch to GitHub.
+Expected output includes `3`.
+
+## 4. Render setup (app only)
+
+1. Push `main` to GitHub.
 2. In Render Dashboard, create a Blueprint from this repo.
-3. Confirm services:
-   - `smartlearn-mysql` (private service, MySQL 8)
-   - `smartlearn-app` (Docker web service)
-4. Provide secret values when prompted:
-   - `MYSQL_PASSWORD`
-   - `MYSQL_ROOT_PASSWORD`
-   - `APP_KEY`
-   - `APP_URL`
-   - `FRONTEND_URL`
-   - `GEMINI_API_KEY`
-   - `ADMIN_EMAIL`
-   - `ADMIN_PASSWORD`
+3. Confirm there is only one service:
+   - `smartlearn-app` (web, docker, free plan)
+4. Set environment variables for `smartlearn-app`:
 
-## 4. Recommended production values
+Required app values:
 
+- `APP_NAME=SmartLearn`
 - `APP_ENV=production`
 - `APP_DEBUG=false`
+- `APP_KEY=<generated key>`
 - `APP_URL=https://<your-render-web-url>.onrender.com`
 - `FRONTEND_URL=https://<your-render-web-url>.onrender.com`
+- `LOG_LEVEL=error`
+- `VITE_BACKEND_ENDPOINT=` (leave empty for same-origin `/api`)
+
+Required external DB values from Aiven:
+
+- `DB_CONNECTION=mysql`
+- `DB_HOST=<aiven-host>`
+- `DB_PORT=<aiven-port>`
+- `DB_DATABASE=<aiven-database>`
+- `DB_USERNAME=<aiven-username>`
+- `DB_PASSWORD=<aiven-password>`
+- `MYSQL_SSL_MODE=REQUIRED`
+
+If you use Aiven defaults, this is often:
+
+- `DB_DATABASE=defaultdb`
+- `DB_USERNAME=avnadmin`
+
+Optional values:
+
+- `MYSQL_ATTR_SSL_CA` (path in container if you bundle a CA file)
+- `GEMINI_API_KEY`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
 
 Generate `APP_KEY` locally:
 
@@ -68,42 +101,39 @@ Generate `APP_KEY` locally:
 php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 ```
 
-Notes:
-
-- Keep `DB_DATABASE=smartlearn` unless you also edit SQL files under `database/migrations`.
-- `VITE_BACKEND_ENDPOINT` is intentionally empty in `render.yaml` for same-origin `/api/...` calls.
-
-## 5. GitHub settings to configure
+## 5. GitHub setup
 
 ### Required repository secret
 
-- `RENDER_DEPLOY_HOOK_URL`: your Render web service deploy hook URL
+- `RENDER_DEPLOY_HOOK_URL` (Render web service deploy hook)
 
-### Optional: GitHub Environments
+### CI secret requirements
 
-Not required for current setup.
+No app secrets are required for CI in this repo.
 
-Use environments only if you want extra controls such as:
+Reason:
 
-- manual approval before production deploy
-- branch restrictions
-- environment-scoped secrets
+- CI creates `server/.env` from `server/.env.example` at runtime
+- CI generates `APP_KEY` dynamically
+- CI runs against Docker Compose services on the runner, not your Render/Aiven production resources
 
-If you do use it, store `RENDER_DEPLOY_HOOK_URL` in that environment and update workflow `environment:` settings.
+### Optional GitHub Environments
 
-## 6. CI/CD flow in this repo
+Use GitHub Environments only if you want approval gates or environment-scoped secrets. If used, store `RENDER_DEPLOY_HOOK_URL` there and update workflow environment settings.
 
-1. `CI E2E` runs on PRs, push to `main`, and manual dispatch.
-2. It builds and starts full Docker stack.
-3. It runs smoke e2e checks:
+## 6. CI/CD flow
+
+1. `CI E2E` runs on pull requests, push to `main`, and manual dispatch.
+2. CI starts Docker Compose (app + temporary MySQL) on GitHub runner.
+3. Smoke checks validate:
    - `/api/health`
    - `/api/categories`
-   - register user
+   - register
    - authenticate
-   - access protected profile endpoint
-4. If CI on `main` succeeds, `Deploy Render` workflow calls deploy hook.
+   - protected profile route
+4. If CI succeeds on `main`, `Deploy Render` triggers the Render deploy hook.
 
-## 7. What pre-deploy does on Render
+## 7. Render pre-deploy database bootstrap
 
 Before app start, Render runs:
 
@@ -111,34 +141,40 @@ Before app start, Render runs:
 bash scripts/render-db-init.sh
 ```
 
-That script:
+The script now:
 
-- waits for MySQL readiness
-- applies SQL schema files
-- seeds data only if categories table is empty
+- waits for external MySQL readiness
+- applies schema SQL files
+- seeds base data only when categories are empty
+- supports optional TLS flags (`MYSQL_SSL_MODE`, `MYSQL_ATTR_SSL_CA`, `MYSQL_SSL_CERT`, `MYSQL_SSL_KEY`)
 
 ## 8. Post-deploy verification checklist
 
-After first successful deploy:
-
 1. Open `https://<your-render-web-url>.onrender.com/api/health`
-2. Ensure response is `{"status":"ok"}`
+2. Confirm response contains `{"status":"ok"}`
 3. Open `https://<your-render-web-url>.onrender.com/api/categories`
-4. Verify category list is returned
+4. Confirm category data is returned
 5. Open app root URL and test register/login
 
 ## 9. Common issues
 
-### App is up but API calls fail
+### Health endpoint fails right after deploy
+
+- Verify all DB env vars match Aiven exactly.
+- Confirm Aiven allows public access from Render.
+- Check pre-deploy logs for `scripts/render-db-init.sh`.
+
+### TLS/SSL DB connection errors
+
+- Keep `MYSQL_SSL_MODE=REQUIRED`.
+- If your provider enforces CA validation, add a CA file in image and set `MYSQL_ATTR_SSL_CA`.
+
+### API works locally but fails on Render
 
 - Verify `APP_URL` and `FRONTEND_URL` exactly match deployed URL.
-- Redeploy after env changes.
+- Redeploy after env var changes.
 
-### DB tables missing
+### Wrong frontend API host
 
-- Check app pre-deploy logs for `scripts/render-db-init.sh` output.
-
-### Frontend using wrong API host
-
-- Keep `VITE_BACKEND_ENDPOINT` empty in Render for same-origin calls.
-- Trigger rebuild/redeploy after changing it.
+- Keep `VITE_BACKEND_ENDPOINT` empty on Render for same-origin requests.
+- Trigger rebuild/redeploy after any frontend env change.
