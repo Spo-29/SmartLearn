@@ -8,7 +8,6 @@ services:
     region: oregon
     autoDeployTrigger: off
     healthCheckPath: /api/health
-    preDeployCommand: /bin/bash -lc "bash scripts/render-db-init.sh"
     envVars:
       - key: APP_NAME
         value: SmartLearn
@@ -26,6 +25,8 @@ services:
         value: error
       - key: DB_CONNECTION
         value: mysql
+      - key: RUN_DB_BOOTSTRAP
+        value: 'true'
       - key: DB_HOST
         sync: false
       - key: DB_PORT

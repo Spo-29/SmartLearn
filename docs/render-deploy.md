@@ -17,6 +17,7 @@ In this repo, deployment is now app-only on Render, with database hosted externa
 - `render.yaml` now defines only `smartlearn-app` (no Render MySQL service, no Render disk)
 - `render.yaml` DB variables are external (`DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`)
 - `scripts/render-db-init.sh` now supports external DB names and optional TLS settings
+- DB bootstrap runs during container startup (`RUN_DB_BOOTSTRAP=true`) because Render Free does not support `preDeployCommand`
 - `.github/workflows/ci-e2e.yml` still uses Docker Compose for CI with a temporary MySQL container (independent from production)
 
 ## 3. Aiven setup (recommended)
@@ -76,6 +77,7 @@ Required app values:
 Required external DB values from Aiven:
 
 - `DB_CONNECTION=mysql`
+- `RUN_DB_BOOTSTRAP=true`
 - `DB_HOST=<aiven-host>`
 - `DB_PORT=<aiven-port>`
 - `DB_DATABASE=<aiven-database>`
@@ -133,20 +135,20 @@ Use GitHub Environments only if you want approval gates or environment-scoped se
    - protected profile route
 4. If CI succeeds on `main`, `Deploy Render` triggers the Render deploy hook.
 
-## 7. Render pre-deploy database bootstrap
+## 7. Render startup database bootstrap
 
-Before app start, Render runs:
+On Render Free, `preDeployCommand` is not supported. This repo now bootstraps the database during container startup.
 
-```bash
-bash scripts/render-db-init.sh
-```
-
-The script now:
+The startup flow now:
 
 - waits for external MySQL readiness
 - applies schema SQL files
 - seeds base data only when categories are empty
 - supports optional TLS flags (`MYSQL_SSL_MODE`, `MYSQL_ATTR_SSL_CA`, `MYSQL_SSL_CERT`, `MYSQL_SSL_KEY`)
+
+If you need to skip bootstrap after initial setup, set:
+
+- `RUN_DB_BOOTSTRAP=false`
 
 ## 8. Post-deploy verification checklist
 
@@ -162,7 +164,7 @@ The script now:
 
 - Verify all DB env vars match Aiven exactly.
 - Confirm Aiven allows public access from Render.
-- Check pre-deploy logs for `scripts/render-db-init.sh`.
+- Check service startup logs for `scripts/render-db-init.sh` output.
 
 ### TLS/SSL DB connection errors
 

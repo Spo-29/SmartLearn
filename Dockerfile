@@ -53,6 +53,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy Laravel backend code
 COPY server/ /var/www/html
 COPY client/ /var/www/html/client
+COPY database/ /var/www/html/database
+COPY scripts/render-db-init.sh /var/www/html/scripts/render-db-init.sh
+COPY server/docker-start.sh /usr/local/bin/docker-start.sh
 
 # Set working directory
 WORKDIR /var/www/html
@@ -62,6 +65,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoload
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod +x /var/www/html/scripts/render-db-init.sh /usr/local/bin/docker-start.sh
 
 # RUN ls -a
 # RUN echo "hello wrld"
@@ -76,6 +80,4 @@ RUN cp -r client/dist/* public/
 # # Expose port 80 for Apache
 EXPOSE 80
 
-# FROM php:8.2-apache
-# # Start Apache server
-# CMD ["apache2-foreground"]
+CMD ["/usr/local/bin/docker-start.sh"]
