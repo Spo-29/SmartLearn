@@ -5,6 +5,7 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    default-mysql-client \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libpng-dev \
@@ -57,7 +58,7 @@ COPY client/ /var/www/html/client
 WORKDIR /var/www/html
 
 # Install Laravel dependencies
-RUN composer install
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
 # Set permissions for Laravel storage and cache
 RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
@@ -65,7 +66,9 @@ RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html/stora
 # RUN ls -a
 # RUN echo "hello wrld"
 
-RUN cd client && npm install && npm run build
+ARG VITE_BACKEND_ENDPOINT=http://localhost:9000
+RUN printf "VITE_BACKEND_ENDPOINT=%s\n" "$VITE_BACKEND_ENDPOINT" > /var/www/html/client/.env.production
+RUN cd client && npm ci && npm run build
 
 # # Move React build to Laravel public directory
 RUN cp -r client/dist/* public/

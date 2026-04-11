@@ -1,0 +1,83 @@
+services:
+  - type: pserv
+    name: smartlearn-mysql
+    runtime: image
+    image:
+      url: mysql:8.0
+    plan: starter
+    region: oregon
+    autoDeployTrigger: off
+    envVars:
+      - key: MYSQL_DATABASE
+        value: smartlearn
+      - key: MYSQL_USER
+        value: smartlearn
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_ROOT_PASSWORD
+        sync: false
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+
+  - type: web
+    name: smartlearn-app
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    region: oregon
+    autoDeployTrigger: off
+    healthCheckPath: /api/health
+    preDeployCommand: /bin/bash -lc "bash scripts/render-db-init.sh"
+    envVars:
+      - key: APP_NAME
+        value: SmartLearn
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: 'false'
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: LOG_LEVEL
+        value: error
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromService:
+          type: pserv
+          name: smartlearn-mysql
+          property: host
+      - key: DB_PORT
+        fromService:
+          type: pserv
+          name: smartlearn-mysql
+          property: port
+      - key: DB_DATABASE
+        fromService:
+          type: pserv
+          name: smartlearn-mysql
+          envVarKey: MYSQL_DATABASE
+      - key: DB_USERNAME
+        fromService:
+          type: pserv
+          name: smartlearn-mysql
+          envVarKey: MYSQL_USER
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: smartlearn-mysql
+          envVarKey: MYSQL_PASSWORD
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: VITE_BACKEND_ENDPOINT
+        value: ''

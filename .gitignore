@@ -23,4 +23,8 @@
 
 MIGRATION_PROMPT.md
 
-*upload/*
+**/public/upload/**
+!**/public/upload/
+!**/public/upload/**/
+!**/public/upload/.gitkeep
+!**/public/upload/**/.gitkeep
