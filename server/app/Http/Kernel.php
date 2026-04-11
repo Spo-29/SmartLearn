@@ -41,7 +41,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            // This API uses Bearer tokens (Sanctum personal access tokens), not cookie-based SPA auth.
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
