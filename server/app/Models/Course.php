@@ -80,6 +80,21 @@ class Course extends Model
         return $this->hasMany(Activity::class);
     }
 
+    public function lessonAnalyses()
+    {
+        return $this->hasMany(LessonAnalysis::class);
+    }
+
+    public function generatedQuizzes()
+    {
+        return $this->hasMany(UserGeneratedQuiz::class);
+    }
+
+    public function quizAttempts()
+    {
+        return $this->hasMany(UserQuizAttempt::class);
+    }
+
     public function getCourseSmallImageAttribute()
     {
         if (!$this->image) {

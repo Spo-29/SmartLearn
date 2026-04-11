@@ -15,6 +15,7 @@ const LessonSort = ({ show, chapter, loading, onClose, onSave }) => {
     }
 
     const reordered = [...items];
+    const [movedItem] = reordered.splice(result.source.index, 1);
     reordered.splice(result.destination.index, 0, movedItem);
     setItems(reordered);
   };
@@ -31,12 +32,7 @@ const LessonSort = ({ show, chapter, loading, onClose, onSave }) => {
   };
 
   return (
-    <Modal
-      show={show}
-      onHide={onClose}
-      onShow={() => setItems(chapter?.lessons || [])}
-      centered
-    >
+    <Modal show={show} onHide={onClose} onShow={() => setItems(chapter?.lessons || [])} centered>
       <Modal.Header closeButton>
         <Modal.Title>Reorder Lessons</Modal.Title>
       </Modal.Header>
@@ -53,12 +49,7 @@ const LessonSort = ({ show, chapter, loading, onClose, onSave }) => {
                     {items.map((lesson, index) => (
                       <Draggable key={lesson.id} draggableId={`lesson-sort-${lesson.id}`} index={index}>
                         {(dragProvided) => (
-                          <div
-                            ref={dragProvided.innerRef}
-                            {...dragProvided.draggableProps}
-                            {...dragProvided.dragHandleProps}
-                            className="card border-0 bg-light mb-2"
-                          >
+                          <div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className="card border-0 bg-light mb-2">
                             <div className="card-body py-2 px-3 d-flex align-items-center gap-2">
                               <span className="text-muted">::</span>
                               <span className="small fw-semibold">{lesson.title}</span>

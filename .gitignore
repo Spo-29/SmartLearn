@@ -22,3 +22,9 @@
 **/*.sqlite
 
 MIGRATION_PROMPT.md
+
+**/public/upload/**
+!**/public/upload/
+!**/public/upload/**/
+!**/public/upload/.gitkeep
+!**/public/upload/**/.gitkeep

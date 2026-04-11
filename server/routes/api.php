@@ -7,10 +7,13 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\LessonAnalysisController;
+use App\Http\Controllers\LessonQuizController;
 use App\Http\Controllers\OutcomeController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RequirementController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReviewController;
 /*
@@ -28,6 +31,21 @@ Route::get('/courses/{courseId}/reviews', [ReviewController::class, 'courseRevie
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
+});
+
+Route::get('/health', function () {
+    try {
+        DB::select('SELECT 1');
+
+        return response()->json([
+            'status' => 'ok',
+        ], 200);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'database_unreachable',
+        ], 500);
+    }
 });
 
 // Public routes
@@ -107,6 +125,18 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/lessons/{id}/video', [LessonController::class, 'uploadVideo'])->whereNumber('id');
     Route::delete('/lessons/{id}/video', [LessonController::class, 'deleteVideo'])->whereNumber('id');
     Route::delete('/lessons/{id}', [LessonController::class, 'destroy'])->whereNumber('id');
+    Route::get('/lessons/{lessonId}/analysis', [LessonAnalysisController::class, 'showForOwner'])->whereNumber('lessonId');
+    Route::post('/lessons/{lessonId}/analysis/regenerate', [LessonAnalysisController::class, 'regenerateForOwner'])->whereNumber('lessonId');
+    Route::get('/courses/{courseId}/lessons/{lessonId}/analysis', [LessonAnalysisController::class, 'showForLearner'])
+        ->whereNumber('courseId')
+        ->whereNumber('lessonId');
+    Route::get('/courses/{courseId}/lessons/{lessonId}/quizzes/latest', [LessonQuizController::class, 'latestForLesson'])
+        ->whereNumber('courseId')
+        ->whereNumber('lessonId');
+    Route::post('/courses/{courseId}/lessons/{lessonId}/quizzes/generate', [LessonQuizController::class, 'generateForLesson'])
+        ->whereNumber('courseId')
+        ->whereNumber('lessonId');
+    Route::post('/quizzes/{quizId}/submit', [LessonQuizController::class, 'submit'])->whereNumber('quizId');
 
     Route::group(['middleware' => ['check.admin']], function () {
         Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);

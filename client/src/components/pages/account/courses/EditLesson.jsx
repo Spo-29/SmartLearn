@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Layout from '../../../common/Layout';
@@ -24,6 +24,9 @@ const EditLesson = () => {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [deletingVideo, setDeletingVideo] = useState(false);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisRegenerating, setAnalysisRegenerating] = useState(false);
+  const [analysisData, setAnalysisData] = useState(null);
 
   const resolveVideoUrl = (videoValue) => {
     if (!videoValue) {
@@ -49,6 +52,36 @@ const EditLesson = () => {
       return null;
     }
   }, []);
+
+  const loadLessonAnalysis = useCallback(async () => {
+    if (!token || !lessonId) {
+      setAnalysisData(null);
+      return;
+    }
+
+    setAnalysisLoading(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/lessons/${lessonId}/analysis`, {
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        setAnalysisData(result.data || null);
+      } else {
+        setAnalysisData(null);
+      }
+    } catch {
+      setAnalysisData(null);
+    } finally {
+      setAnalysisLoading(false);
+    }
+  }, [lessonId, token]);
 
   useEffect(() => {
     if (!token) {
@@ -89,6 +122,7 @@ const EditLesson = () => {
         });
         setVideoPreviewUrl(resolveVideoUrl(lesson?.video || ''));
         setVideoFile(null);
+        await loadLessonAnalysis();
       } catch (error) {
         toast.error('Failed to load lesson details.');
       } finally {
@@ -97,7 +131,7 @@ const EditLesson = () => {
     };
 
     loadLesson();
-  }, [token, lessonId, courseId, navigate]);
+  }, [token, lessonId, courseId, navigate, loadLessonAnalysis]);
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -135,6 +169,7 @@ const EditLesson = () => {
         setForm((prev) => ({ ...prev, video: videoValue }));
         setVideoPreviewUrl(resolveVideoUrl(videoValue));
         setVideoFile(null);
+        await loadLessonAnalysis();
         toast.success(result.message || 'Lesson video uploaded successfully.');
         return result;
       }
@@ -179,6 +214,7 @@ const EditLesson = () => {
         setForm((prev) => ({ ...prev, video: '' }));
         setVideoPreviewUrl('');
         setVideoFile(null);
+        await loadLessonAnalysis();
         toast.success(result.message || 'Lesson video deleted successfully.');
         return;
       }
@@ -188,6 +224,40 @@ const EditLesson = () => {
       toast.error('Failed to delete lesson video.');
     } finally {
       setDeletingVideo(false);
+    }
+  };
+
+  const handleRegenerateAnalysis = async () => {
+    if (!token) {
+      toast.error('Session expired. Please login again.');
+      navigate('/account/login');
+      return;
+    }
+
+    setAnalysisRegenerating(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/lessons/${lessonId}/analysis/regenerate`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.status === 200) {
+        setAnalysisData(result.data || null);
+        toast.success(result.message || 'Lesson analysis regenerated successfully.');
+        return;
+      }
+
+      toast.error(result.message || 'Failed to regenerate lesson analysis.');
+    } catch {
+      toast.error('Failed to regenerate lesson analysis.');
+    } finally {
+      setAnalysisRegenerating(false);
     }
   };
 
@@ -285,11 +355,7 @@ const EditLesson = () => {
           <div className="row">
             <div className="col-md-12 mt-5 mb-3 d-flex justify-content-between align-items-center">
               <h2 className="h4 mb-0 pb-0">Edit Lesson</h2>
-              <button
-                type="button"
-                className="btn btn-outline-secondary btn-sm"
-                onClick={() => navigate(`/account/courses/edit/${courseId}`)}
-              >
+              <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => navigate(`/account/courses/edit/${courseId}`)}>
                 Back to Edit Course
               </button>
             </div>
@@ -314,26 +380,13 @@ const EditLesson = () => {
 
                       <div className="mb-3">
                         <label htmlFor="title">Title</label>
-                        <input
-                          id="title"
-                          type="text"
-                          className={`form-control ${errors.title ? 'is-invalid' : ''}`}
-                          placeholder="Lesson"
-                          value={form.title}
-                          onChange={(event) => handleChange('title', event.target.value)}
-                          maxLength={255}
-                        />
+                        <input id="title" type="text" className={`form-control ${errors.title ? 'is-invalid' : ''}`} placeholder="Lesson" value={form.title} onChange={(event) => handleChange('title', event.target.value)} maxLength={255} />
                         {errors.title && <p className="invalid-feedback">{errors.title}</p>}
                       </div>
 
                       <div className="mb-3">
                         <label htmlFor="chapter_id">Chapter</label>
-                        <select
-                          id="chapter_id"
-                          className={`form-control ${errors.chapter_id ? 'is-invalid' : ''}`}
-                          value={form.chapter_id}
-                          onChange={(event) => handleChange('chapter_id', event.target.value)}
-                        >
+                        <select id="chapter_id" className={`form-control ${errors.chapter_id ? 'is-invalid' : ''}`} value={form.chapter_id} onChange={(event) => handleChange('chapter_id', event.target.value)}>
                           <option value="">Select a Chapter</option>
                           {chapters.map((chapter) => (
                             <option key={chapter.id} value={chapter.id}>
@@ -359,36 +412,16 @@ const EditLesson = () => {
 
                       <div className="mb-3">
                         <label htmlFor="video">Video URL</label>
-                        <input
-                          id="video"
-                          type="text"
-                          className={`form-control ${errors.video ? 'is-invalid' : ''}`}
-                          placeholder="https://..."
-                          value={form.video}
-                          onChange={(event) => handleChange('video', event.target.value)}
-                          maxLength={255}
-                        />
+                        <input id="video" type="text" className={`form-control ${errors.video ? 'is-invalid' : ''}`} placeholder="https://..." value={form.video} onChange={(event) => handleChange('video', event.target.value)} maxLength={255} />
                         {errors.video && <p className="invalid-feedback">{errors.video}</p>}
-                        <small className="text-muted d-block mt-1">
-                          You can provide an external video URL or upload a lesson video file below.
-                        </small>
+                        <small className="text-muted d-block mt-1">You can provide an external video URL or upload a lesson video file below.</small>
                       </div>
 
                       <div className="mb-3">
                         <label htmlFor="video_file">Upload Lesson Video</label>
-                        <input
-                          id="video_file"
-                          type="file"
-                          accept="video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-msvideo"
-                          className="form-control"
-                          onChange={(event) => setVideoFile(event.target.files?.[0] || null)}
-                        />
-                        <small className="text-muted d-block mt-1">
-                          Supported formats: MP4, MOV, AVI, MKV, WEBM. Max size: 500MB.
-                        </small>
-                        {videoFile && (
-                          <small className="text-muted d-block mt-1">Selected file: {videoFile.name}</small>
-                        )}
+                        <input id="video_file" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-matroska,video/x-msvideo" className="form-control" onChange={(event) => setVideoFile(event.target.files?.[0] || null)} />
+                        <small className="text-muted d-block mt-1">Supported formats: MP4, MOV, AVI, MKV, WEBM. Max size: 500MB.</small>
+                        {videoFile && <small className="text-muted d-block mt-1">Selected file: {videoFile.name}</small>}
                       </div>
 
                       {videoPreviewUrl && (
@@ -410,26 +443,42 @@ const EditLesson = () => {
 
                       {(form.video || videoPreviewUrl) && (
                         <div className="mb-3">
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-sm"
-                            onClick={handleDeleteVideo}
-                            disabled={deletingVideo}
-                          >
+                          <button type="button" className="btn btn-danger btn-sm" onClick={handleDeleteVideo} disabled={deletingVideo}>
                             {deletingVideo ? 'Deleting Video...' : 'Delete Lesson Video'}
                           </button>
                         </div>
                       )}
 
+                      <div className="mb-4 border rounded p-3 bg-light">
+                        <div className="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                          <label className="form-label fw-semibold mb-0">AI Lesson Analysis</label>
+                          <button type="button" className="btn btn-outline-primary btn-sm" onClick={handleRegenerateAnalysis} disabled={analysisRegenerating || analysisLoading}>
+                            {analysisRegenerating ? 'Regenerating...' : 'Regenerate Analysis'}
+                          </button>
+                        </div>
+
+                        {analysisLoading ? (
+                          <p className="text-muted mb-0">Loading analysis status...</p>
+                        ) : !analysisData ? (
+                          <p className="text-muted mb-0">No analysis available yet.</p>
+                        ) : analysisData.status === 'pending' ? (
+                          <p className="text-muted mb-0">Analysis generation is in progress.</p>
+                        ) : analysisData.status === 'failed' ? (
+                          <p className="text-danger mb-0">{analysisData.error_message || 'Analysis generation failed.'}</p>
+                        ) : (
+                          <div>
+                            <p className="mb-2">
+                              <strong>Status:</strong> {analysisData.status} | <strong>Version:</strong> {analysisData.version}
+                            </p>
+                            <p className="mb-0">{analysisData.summary || 'No summary available.'}</p>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="row">
                         <div className="col-md-6 mb-3">
                           <label htmlFor="status">Status</label>
-                          <select
-                            id="status"
-                            className={`form-control ${errors.status ? 'is-invalid' : ''}`}
-                            value={form.status}
-                            onChange={(event) => handleChange('status', event.target.value)}
-                          >
+                          <select id="status" className={`form-control ${errors.status ? 'is-invalid' : ''}`} value={form.status} onChange={(event) => handleChange('status', event.target.value)}>
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
                           </select>
@@ -438,12 +487,7 @@ const EditLesson = () => {
 
                         <div className="col-md-6 mb-3">
                           <label htmlFor="is_free_preview">Free Lesson</label>
-                          <select
-                            id="is_free_preview"
-                            className={`form-control ${errors.is_free_preview ? 'is-invalid' : ''}`}
-                            value={form.is_free_preview}
-                            onChange={(event) => handleChange('is_free_preview', event.target.value)}
-                          >
+                          <select id="is_free_preview" className={`form-control ${errors.is_free_preview ? 'is-invalid' : ''}`} value={form.is_free_preview} onChange={(event) => handleChange('is_free_preview', event.target.value)}>
                             <option value="no">No</option>
                             <option value="yes">Yes</option>
                           </select>
