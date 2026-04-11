@@ -103,10 +103,7 @@ function App() {
                 </RequireAuth>
               }
             />
-            <Route
-              path="/account/courses-enrolled"
-              element={<Navigate to="/account/my-learning" replace />}
-            />
+            <Route path="/account/courses-enrolled" element={<Navigate to="/account/my-learning" replace />} />
             <Route
               path="/account/watch-course/:courseId"
               element={
@@ -115,10 +112,7 @@ function App() {
                 </RequireAuth>
               }
             />
-            <Route
-              path="/account/watch-course"
-              element={<Navigate to="/account/my-learning" replace />}
-            />
+            <Route path="/account/watch-course" element={<Navigate to="/account/my-learning" replace />} />
             <Route
               path="/account/dashboard"
               element={

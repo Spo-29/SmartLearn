@@ -65,10 +65,7 @@ const EditCover = ({ courseId, course, onUploaded }) => {
 
       if (result.status === 200) {
         const uploadedCourse = result.data;
-        setPreviewUrl(
-          uploadedCourse?.course_small_image ||
-            `${import.meta.env.VITE_BACKEND_ENDPOINT}/upload/course/small/${uploadedCourse?.image}`,
-        );
+        setPreviewUrl(uploadedCourse?.course_small_image || `${import.meta.env.VITE_BACKEND_ENDPOINT}/upload/course/small/${uploadedCourse?.image}`);
         if (onUploaded) {
           onUploaded(uploadedCourse);
         }

@@ -45,9 +45,7 @@ body {
   color: $primary-black;
   background-color: $bg-light;
   background-image:
-    radial-gradient(circle at 4% 10%, rgba(61, 166, 255, 0.16), transparent 30%),
-    radial-gradient(circle at 86% 5%, rgba(239, 108, 87, 0.14), transparent 28%),
-    radial-gradient(circle at 72% 84%, rgba(82, 213, 199, 0.16), transparent 26%),
+    radial-gradient(circle at 4% 10%, rgba(61, 166, 255, 0.16), transparent 30%), radial-gradient(circle at 86% 5%, rgba(239, 108, 87, 0.14), transparent 28%), radial-gradient(circle at 72% 84%, rgba(82, 213, 199, 0.16), transparent 26%),
     linear-gradient(180deg, #f9fbfc 0%, #eef5fa 100%);
   min-height: 100vh;
 }
@@ -134,7 +132,9 @@ a {
   border: 1px solid rgba(15, 23, 42, 0.07);
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   box-shadow: var(--shadow-soft);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
   overflow: hidden;
 
   &:hover {
@@ -158,7 +158,10 @@ a {
   border-radius: var(--radius-sm);
   border: none;
   font-weight: 700;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 
   &:hover {
     transform: translateY(-1px);
@@ -563,7 +566,9 @@ a {
       border-bottom: 1px solid #d3e6f5;
       border-left: 3px solid transparent;
       padding-left: 10px;
-      transition: background-color 0.2s ease, border-left-color 0.2s ease;
+      transition:
+        background-color 0.2s ease,
+        border-left-color 0.2s ease;
 
       a {
         display: block;

@@ -41,9 +41,7 @@ const Detail = () => {
           Accept: 'application/json',
         };
 
-        const endpoint = token
-          ? `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}/detail`
-          : `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/fetch-course/${id}`;
+        const endpoint = token ? `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}/detail` : `${import.meta.env.VITE_BACKEND_ENDPOINT}/api/fetch-course/${id}`;
 
         if (token) {
           headers.Authorization = `Bearer ${token}`;
@@ -252,13 +250,7 @@ const Detail = () => {
                               {(chapter.lessons || []).length ? (
                                 <ListGroup>
                                   {(chapter.lessons || []).map((lesson) => (
-                                    <ListGroup.Item
-                                      as={Link}
-                                      action
-                                      key={lesson.id}
-                                      to={`/detail/${id}/lessons/${lesson.id}`}
-                                      state={{ from: `/detail/${id}` }}
-                                    >
+                                    <ListGroup.Item as={Link} action key={lesson.id} to={`/detail/${id}/lessons/${lesson.id}`} state={{ from: `/detail/${id}` }}>
                                       {lesson.title}
                                     </ListGroup.Item>
                                   ))}
@@ -307,9 +299,7 @@ const Detail = () => {
               <div className="border rounded-3 bg-white p-4 shadow-sm">
                 <Card.Body>
                   <h3 className="fw-bold">${course.price !== null && course.price !== undefined ? Number(course.price).toFixed(2) : '0.00'}</h3>
-                  {course.cross_price !== null && course.cross_price !== undefined ? (
-                    <div className="text-muted text-decoration-line-through">${Number(course.cross_price).toFixed(2)}</div>
-                  ) : null}
+                  {course.cross_price !== null && course.cross_price !== undefined ? <div className="text-muted text-decoration-line-through">${Number(course.cross_price).toFixed(2)}</div> : null}
                 </Card.Body>
 
                 <div className="d-grid mt-3 gap-2">

@@ -22,3 +22,5 @@
 **/*.sqlite
 
 MIGRATION_PROMPT.md
+
+*upload/*

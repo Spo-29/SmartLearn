@@ -5,13 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Chapter;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Services\Ai\LessonAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Throwable;
 
 class LessonController extends Controller
 {
+    private $analysisService;
+
+    public function __construct(LessonAnalysisService $analysisService)
+    {
+        $this->analysisService = $analysisService;
+    }
+
     public function store(Request $request, $courseId)
     {
         $course = Course::where('id', $courseId)
@@ -65,6 +75,8 @@ class LessonController extends Controller
             'is_free_preview' => $request->input('is_free_preview', 'no'),
             'sort_order' => $nextSortOrder,
         ]);
+
+        $this->triggerInitialAnalysisIfMissing($lesson);
 
         return response()->json([
             'status' => 200,
@@ -170,6 +182,8 @@ class LessonController extends Controller
         $lesson->is_free_preview = $request->input('is_free_preview', $lesson->is_free_preview ?? 'no');
         $lesson->save();
 
+        $this->triggerInitialAnalysisIfMissing($lesson);
+
         return response()->json([
             'status' => 200,
             'data' => $lesson,
@@ -252,6 +266,8 @@ class LessonController extends Controller
         $lesson->video = 'upload/lesson/videos/' . $fileName;
         $lesson->save();
 
+        $this->triggerInitialAnalysisIfMissing($lesson);
+
         return response()->json([
             'status' => 200,
             'data' => $lesson,
@@ -290,6 +306,8 @@ class LessonController extends Controller
 
         $lesson->video = null;
         $lesson->save();
+
+        $this->triggerInitialAnalysisIfMissing($lesson);
 
         return response()->json([
             'status' => 200,
@@ -409,6 +427,18 @@ class LessonController extends Controller
 
         if (File::exists($fullPath)) {
             File::delete($fullPath);
+        }
+    }
+
+    private function triggerInitialAnalysisIfMissing(Lesson $lesson)
+    {
+        try {
+            $this->analysisService->ensureInitialAnalysis($lesson);
+        } catch (Throwable $e) {
+            Log::warning('Failed to trigger initial lesson analysis.', [
+                'lesson_id' => $lesson->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

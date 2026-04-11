@@ -5,11 +5,7 @@ const CourseEnrolled = ({ course }) => {
   const courseTitle = course?.title || 'Untitled Course';
   const courseLevel = course?.level?.name || 'N/A';
   const courseStudents = Number(course?.enrollments_count || 0);
-  const courseRating = course?.average_rating !== null && course?.average_rating !== undefined
-    
-  ? Number(course.average_rating).toFixed(1)
-    : '0.0';
-
+  const courseRating = course?.average_rating !== null && course?.average_rating !== undefined ? Number(course.average_rating).toFixed(1) : '0.0';
   const courseImage = course?.course_small_image || `https://placehold.co/600x350?text=${encodeURIComponent(courseTitle)}`;
 
   return (

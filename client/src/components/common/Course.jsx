@@ -6,14 +6,10 @@ const Course = ({ title, level, enrolled, customClasses, course = null, detailPa
   const courseTitle = course?.title || title || 'Untitled Course';
   const courseLevel = course?.level?.name || level || 'N/A';
   const courseEnrolled = course?.enrollments_count ?? enrolled ?? 0;
-  const courseRating = course?.average_rating !== null && course?.average_rating !== undefined
-    
-  ? Number(course.average_rating).toFixed(1)
-    : '0.0';
-  
-    const coursePrice = course?.price !== null && course?.price !== undefined ? Number(course.price).toFixed(2) : '0.00';
-    const courseImage = course?.course_small_image || `https://placehold.co/600x350?text=${encodeURIComponent(courseTitle)}`;
-    const targetPath = detailPath || (course?.id ? `/detail/${course.id}` : '/detail');
+  const courseRating = course?.average_rating !== null && course?.average_rating !== undefined ? Number(course.average_rating).toFixed(1) : '0.0';
+  const coursePrice = course?.price !== null && course?.price !== undefined ? Number(course.price).toFixed(2) : '0.00';
+  const courseImage = course?.course_small_image || `https://placehold.co/600x350?text=${encodeURIComponent(courseTitle)}`;
+  const targetPath = detailPath || (course?.id ? `/detail/${course.id}` : '/detail');
 
   return (
     <div className={customClasses}>
