@@ -10,6 +10,7 @@ const Hero = () => {
             <h1 className="display-3 fw-bold">Learn Anytime, Anywhere</h1>
             <p className="lead">Join our Learning Management System and explore a wide range of courses to enhance your skills and achieve your goals.</p>
           </div>
+
           <div className="col-md-6 text-center">
             <img src={HeroImg} alt="Student Learning" className="img-fluid " />
           </div>

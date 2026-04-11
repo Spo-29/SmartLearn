@@ -4,7 +4,7 @@ import Hero from '../common/Hero';
 import FeaturedCategories from '../common/FeaturedCategories';
 import FeaturedCourses from '../common/FeaturedCourses';
 
-const Home = () => {
+const Home = ()=> {
   return (
     <Layout>
       <Hero />

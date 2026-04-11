@@ -10,7 +10,6 @@ const Header = () => {
     if (isAuthPage) {
       return '/account/login';
     }
-
     const rawUserInfo = localStorage.getItem('userInfoLms');
 
     if (!rawUserInfo) {
@@ -29,7 +28,6 @@ const Header = () => {
     if (isAuthPage) {
       return '/account/login';
     }
-
     const rawUserInfo = localStorage.getItem('userInfoLms');
 
     if (!rawUserInfo) {
@@ -42,7 +40,7 @@ const Header = () => {
     } catch {
       return '/account/login';
     }
-  }, [isAuthPage]);
+  },  [isAuthPage]);
 
   const myAccountPath = useMemo(() => {
     const rawUserInfo = localStorage.getItem('userInfoLms');

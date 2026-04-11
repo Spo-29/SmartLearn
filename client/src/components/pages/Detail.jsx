@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Layout from '../common/Layout';
 
 const Detail = () => {
+  
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -87,7 +88,6 @@ const Detail = () => {
       navigate('/account/login');
       return;
     }
-
     setEnrolling(true);
 
     try {

@@ -8,6 +8,5 @@ export const RequireAuth = ({children}) => {
     if (!user) {
         return <Navigate to={`/account/login`}/>
     }
-
     return children;
 }

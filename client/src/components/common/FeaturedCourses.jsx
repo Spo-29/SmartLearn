@@ -6,6 +6,7 @@ const FeaturedCourses = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    
     const fetchFeaturedCourses = async () => {
       setLoading(true);
 
@@ -24,6 +25,7 @@ const FeaturedCourses = () => {
         } else {
           setCourses([]);
         }
+        
       } catch {
         setCourses([]);
       } finally {

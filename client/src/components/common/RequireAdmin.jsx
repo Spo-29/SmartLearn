@@ -20,6 +20,7 @@ export const RequireAdmin = ({ children }) => {
     if (!isAdmin) {
       return <Navigate to="/account/dashboard" replace />;
     }
+
   } catch {
     return <Navigate to="/account/login" replace />;
   }

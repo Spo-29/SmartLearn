@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+
 const Course = ({ title, level, enrolled, customClasses, course = null, detailPath = null }) => {
   const courseTitle = course?.title || title || 'Untitled Course';
   const courseLevel = course?.level?.name || level || 'N/A';
@@ -16,6 +17,7 @@ const Course = ({ title, level, enrolled, customClasses, course = null, detailPa
         <div className="card-img-top">
           <img src={courseImage} alt={courseTitle} className="img-fluid" />
         </div>
+
         <div className="card-body">
           <div className="card-title">{courseTitle}</div>
           <div className="meta d-flex py-2">
@@ -29,6 +31,7 @@ const Course = ({ title, level, enrolled, customClasses, course = null, detailPa
                 <div className="text ps-2">{courseLevel}</div>
               </div>
             </div>
+
             <div className="student ps-4">
               <div className="d-flex align-items-center">
                 <div className="icon">
@@ -39,6 +42,7 @@ const Course = ({ title, level, enrolled, customClasses, course = null, detailPa
                 <div className="text ps-2">{courseEnrolled}</div>
               </div>
             </div>
+
             <div className="rating ps-4">
               <div className="d-flex align-items-center">
                 <div className="icon">
@@ -51,13 +55,12 @@ const Course = ({ title, level, enrolled, customClasses, course = null, detailPa
             </div>
           </div>
         </div>
+
         <div className="card-footer bg-white">
           <div className="d-flex py-2 justify-content-between align-items-center">
             <div className="price">${coursePrice}</div>
             <div className="add-to-cart">
-              <Link to={targetPath} className="btn btn-primary">
-                Read More
-              </Link>
+              <Link to={targetPath} className="btn btn-primary">Read More</Link>
             </div>
           </div>
         </div>

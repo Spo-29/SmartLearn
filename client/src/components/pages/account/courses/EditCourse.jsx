@@ -144,33 +144,49 @@ const EditCourse = () => {
       is_featured: data.is_featured,
     };
 
-    await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.status === 200) {
-          toast.success(result.message || 'Course updated successfully.');
-        } else if (result.errors) {
-          Object.keys(result.errors).forEach((field) => {
-            setError(field, {
-              type: 'server',
-              message: result.errors[field][0],
-            });
-          });
-        } else {
-          toast.error(result.message || 'Failed to update course.');
-        }
-      })
-      .catch(() => {
-        toast.error('Something went wrong while updating the course.');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_ENDPOINT}/api/courses/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        toast.success(result.message || 'Course updated successfully.');
+
+        if (result.data) {
+          setCourseData(result.data);
+          reset({
+            title: result.data?.title || '',
+            category_id: result.data?.category_id || '',
+            level_id: result.data?.level_id || '',
+            language_id: result.data?.language_id || '',
+            description: result.data?.description || '',
+            price: result.data?.price ?? '',
+            cross_price: result.data?.cross_price ?? '',
+            status: result.data?.status ?? 1,
+            is_featured: result.data?.is_featured || 'no',
+          });
+        }
+      } else if (result.errors) {
+        Object.keys(result.errors).forEach((field) => {
+          setError(field, {
+            type: 'server',
+            message: result.errors[field][0],
+          });
+        });
+      } else {
+        toast.error(result.message || 'Failed to update course.');
+      }
+    } catch (error) {
+      toast.error('Something went wrong while updating the course.');
+    }
   };
 
   const handlePublishToggle = async () => {
@@ -212,10 +228,17 @@ const EditCourse = () => {
 
       const result = await response.json();
 
-      if (result.status === 200) {
-        setCourseData(result.data);
-        setValue('status', result.data.status);
-        toast.success(result.data.status === 1 ? 'Course published successfully.' : 'Course unpublished successfully.');
+      if (response.ok) {
+        if (result.data) {
+          setCourseData(result.data);
+          setValue('status', result.data.status);
+        }
+
+        toast.success(
+          result?.data?.status === 1
+            ? 'Course published successfully.'
+            : 'Course unpublished successfully.'
+        );
       } else if (result.errors) {
         Object.keys(result.errors).forEach((field) => {
           setError(field, {

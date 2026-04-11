@@ -79,20 +79,36 @@ class CourseController extends Controller
             'languages' => Language::where('status', 1)->get(),
         ], 200);
     }
+public function myCourses(Request $request)
+public function myCourses(Request $request)
+{
+    try {
+        $user = $request->user();
 
-    public function myCourses(Request $request)
-    {
+        if (!$user) {
+            return response()->json([
+                'status' => 401,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
         $courses = Course::with(['category', 'level', 'language'])
-            ->where('user_id', $request->user()->id)
+            ->where('user_id', $user->id)
             ->orderByDesc('id')
             ->get();
 
         return response()->json([
             'status' => 200,
             'data' => $courses,
+            'message' => 'Courses fetched successfully.',
         ], 200);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 500,
+            'message' => $e->getMessage(),
+        ], 500);
     }
-
+}
     public function dashboardStats(Request $request)
     {
         $userId = (int) $request->user()->id;
