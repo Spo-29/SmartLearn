@@ -7,7 +7,7 @@ services:
     plan: free
     region: oregon
     autoDeployTrigger: off
-    healthCheckPath: /api/health
+    healthCheckPath: /
     envVars:
       - key: APP_NAME
         value: SmartLearn

@@ -62,6 +62,7 @@ Expected output includes `3`.
 2. In Render Dashboard, create a Blueprint from this repo.
 3. Confirm there is only one service:
    - `smartlearn-app` (web, docker, free plan)
+   - health check path is `/` (liveness)
 4. Set environment variables for `smartlearn-app`:
 
 Required app values:
@@ -173,6 +174,7 @@ If you need to skip bootstrap after initial setup, set:
 - Verify all DB env vars match Aiven exactly.
 - Confirm Aiven allows public access from Render.
 - Check service startup logs for `scripts/render-db-init.sh` output.
+- Note: Render service health uses `/`, while `/api/health` checks DB connectivity and can return `500` until DB bootstrap is complete.
 
 ### TLS/SSL DB connection errors
 
