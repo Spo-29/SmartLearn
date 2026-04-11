@@ -203,7 +203,7 @@ class CourseController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'image' => 'required|image|mimes:jpeg,jpg,png|max:5120',
+            'image' => 'required|file|mimetypes:image/*',
         ]);
 
         if ($validator->fails()) {
@@ -214,7 +214,7 @@ class CourseController extends Controller
         }
 
         $image = $request->file('image');
-        $extension = strtolower($image->getClientOriginalExtension());
+        $extension = strtolower($image->getClientOriginalExtension() ?: $image->guessExtension() ?: 'img');
         $fileName = time() . '_' . uniqid() . '.' . $extension;
 
         $mainDirectory = public_path('upload/course');
@@ -230,14 +230,19 @@ class CourseController extends Controller
 
         $this->deleteCourseImages($course->image);
 
+        $mainImagePath = $mainDirectory . DIRECTORY_SEPARATOR . $fileName;
         $image->move($mainDirectory, $fileName);
 
         $smallImagePath = $smallDirectory . DIRECTORY_SEPARATOR . $fileName;
-        Image::make($mainDirectory . DIRECTORY_SEPARATOR . $fileName)
-            ->fit(480, 270, function ($constraint) {
-                $constraint->upsize();
-            })
-            ->save($smallImagePath, 85);
+        try {
+            Image::make($mainImagePath)
+                ->fit(480, 270, function ($constraint) {
+                    $constraint->upsize();
+                })
+                ->save($smallImagePath, 85);
+        } catch (\Throwable $exception) {
+            File::copy($mainImagePath, $smallImagePath);
+        }
 
         $course->image = $fileName;
         $course->save();

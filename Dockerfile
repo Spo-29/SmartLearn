@@ -46,12 +46,12 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
     docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Increase PHP limits to allow lesson video uploads.
+# Remove PHP upload size limits so course cover uploads are not capped by PHP.
 RUN { \
-    echo "upload_max_filesize=512M"; \
-    echo "post_max_size=512M"; \
-    echo "max_execution_time=600"; \
-    echo "max_input_time=600"; \
+    echo "upload_max_filesize=0"; \
+    echo "post_max_size=0"; \
+    echo "max_execution_time=0"; \
+    echo "max_input_time=0"; \
     echo "memory_limit=512M"; \
 } > /usr/local/etc/php/conf.d/uploads.ini
 

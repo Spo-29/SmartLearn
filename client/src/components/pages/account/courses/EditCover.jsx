@@ -101,7 +101,7 @@ const EditCover = ({ courseId, course, onUploaded }) => {
               }
             }}
             allowMultiple={false}
-            acceptedFileTypes={['image/jpeg', 'image/jpg', 'image/png']}
+            acceptedFileTypes={['image/*']}
             allowFileTypeValidation
             instantUpload={false}
             allowProcess={false}
