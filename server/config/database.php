@@ -2,6 +2,30 @@
 
 use Illuminate\Support\Str;
 
+$mysqlSslCa = env('MYSQL_ATTR_SSL_CA');
+if (!is_string($mysqlSslCa) || trim($mysqlSslCa) === '' || !is_readable($mysqlSslCa)) {
+    $mysqlSslCa = null;
+}
+
+$mysqlSslCert = env('MYSQL_ATTR_SSL_CERT');
+if (!is_string($mysqlSslCert) || trim($mysqlSslCert) === '' || !is_readable($mysqlSslCert)) {
+    $mysqlSslCert = null;
+}
+
+$mysqlSslKey = env('MYSQL_ATTR_SSL_KEY');
+if (!is_string($mysqlSslKey) || trim($mysqlSslKey) === '' || !is_readable($mysqlSslKey)) {
+    $mysqlSslKey = null;
+}
+
+$mysqlVerifyServerCert = env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT', false);
+if (is_string($mysqlVerifyServerCert)) {
+    $mysqlVerifyServerCert = filter_var($mysqlVerifyServerCert, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+}
+
+if ($mysqlVerifyServerCert === null) {
+    $mysqlVerifyServerCert = false;
+}
+
 return [
 
     /*
@@ -58,9 +82,21 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => extension_loaded('pdo_mysql') ? (static function () use ($mysqlSslCa, $mysqlSslCert, $mysqlSslKey, $mysqlVerifyServerCert) {
+                $options = [
+                    PDO::MYSQL_ATTR_SSL_CA => $mysqlSslCa,
+                    PDO::MYSQL_ATTR_SSL_CERT => $mysqlSslCert,
+                    PDO::MYSQL_ATTR_SSL_KEY => $mysqlSslKey,
+                ];
+
+                if (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
+                    $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = (bool) $mysqlVerifyServerCert;
+                }
+
+                return array_filter($options, static function ($value) {
+                    return $value !== null && $value !== '';
+                });
+            })() : [],
         ],
 
         'pgsql' => [
